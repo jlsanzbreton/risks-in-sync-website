@@ -55,7 +55,9 @@ HTML entry points + local Markdown/TypeScript content
 - `src/content/` — issue body and metadata
 - `review/**/index.html` — static route metadata
 - `vite.config.ts` — build entry points
-- `public/risksinsync-icon.png` — favicon/touch icon
+- `public/risksinsync-icon.png` — master site icon
+- `public/favicon*`, `apple-touch-icon.png`, `icon-*` — browser, Apple and manifest icon variants
+- `public/risksinsync-og.png` — static Open Graph/Twitter preview image
 - `netlify.toml` — build command and publish directory
 
 ## Development and releases
@@ -148,7 +150,7 @@ Avoid gradients, dashboards, animations, excessive cards or startup-style featur
 
 - Interface/content are English.
 - Routing is deliberately minimal (`window.location.pathname`).
-- Issue one has no hero image because reuse rights were not established.
+- Issue one remains text-led. The supplied screenshot appears to derive from Amprion's Dortmund headquarters press image, which Amprion permits for editorial use with attribution. It was not published because it depicts the company headquarters rather than the incident site, and the screenshot itself is not a traceable source asset. The existing `heroImage` field remains ready for one directly sourced image of the Rommerskirchen/Amprion infrastructure, with creator, source and licence recorded in its caption.
 - The PNG icon is large and can be optimised later while retaining the source asset.
 - Sources currently appear in both Markdown and TypeScript; the content automation should remove this duplication.
 - The launch site collects no user data.

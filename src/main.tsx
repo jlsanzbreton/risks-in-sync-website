@@ -24,7 +24,7 @@ function SiteHeader() {
         <span>IN SYNC</span>
       </a>
       <nav aria-label="Main navigation">
-        <a href="/review/" aria-current={isReview ? "page" : undefined}>Review</a>
+        <a href="/review/" aria-current={isReview ? "page" : undefined}>Cascade Review</a>
         <a href="/about/" aria-current={isAbout ? "page" : undefined}>About</a>
       </nav>
     </header>
@@ -35,8 +35,14 @@ function SiteFooter() {
   return (
     <footer className="site-footer">
       <div className="footer-inner">
-        <a className="footer-mark" href="/">RISKS IN SYNC</a>
-        <p>AI-assisted <span>·</span> Human-edited <span>·</span> Source-backed</p>
+        <div>
+          <a className="footer-mark" href="/">RISKS IN SYNC</a>
+          <p className="footer-author">Published by Jose Luis Sanz</p>
+        </div>
+        <div className="footer-meta">
+          <p>AI-assisted <span>·</span> Human-edited <span>·</span> Source-backed</p>
+          <a href="/about/#contact">Contact</a>
+        </div>
       </div>
     </footer>
   );
@@ -78,7 +84,11 @@ function HomePage() {
           </div>
           <div className="hero-copy">
             <p>Risks In Sync explores how disturbances move through connected physical, digital and human systems—and why some failures stop while others become cascades.</p>
-            <a className="primary-link" href={REVIEW_PATH}>Read Cascade Risk Review <span>Year 1 · Nr. 1</span> <Arrow>→</Arrow></a>
+            <a className="hero-review-link" href={REVIEW_PATH}>
+              <span className="hero-review-meta"><b>Cascade Risk Review</b><small>{issueOne.issue}</small></span>
+              <strong>{issueOne.title}</strong>
+              <span className="hero-review-action">Read the review <Arrow>→</Arrow></span>
+            </a>
           </div>
         </div>
       </section>
@@ -100,10 +110,9 @@ function HomePage() {
           <h2>Testing the method in public.</h2>
         </div>
         <div className="prose-block">
-          <p>Risks In Sync is still evolving.</p>
-          <p>AI allows us to apply the same analytical method repeatedly to real events, compare results, identify recurring patterns and test where the method works—or where it needs improvement.</p>
-          <p><strong>AI accelerates research and structured repetition.</strong></p>
-          <p>Human judgment remains responsible for interpretation and publication.</p>
+          <p>Risks In Sync is not presented as a finished framework. It is being tested repeatedly against real incidents.</p>
+          <p>AI changes the economics of repetition: it helps collect and compare evidence, structure cases and apply the same questions often enough to expose useful patterns, weak assumptions and generic conclusions.</p>
+          <p>Human judgment remains responsible for case selection, interpretation, evidence checks, editing and publication.</p>
           <a className="text-link" href="/about/#why-ai">How the experiment works <Arrow>→</Arrow></a>
         </div>
       </section>
@@ -185,9 +194,15 @@ function CascadeDiagram() {
 
 function ReviewArticlePage() {
   const [beforeDiagram, afterDiagram] = reviewMarkdown.split("<!-- CASCADE_DIAGRAM -->");
-  const renderMarkdown = (content: string) => ({
-    __html: marked.parse(content, { async: false }) as string,
-  });
+  const renderMarkdown = (content: string) => {
+    const html = marked.parse(content, { async: false }) as string;
+
+    return {
+      __html: html
+        .replace(/(<h2>Sources<\/h2>\s*)<ol>/, '$1<ol class="sources-list">')
+        .replace(/<h3>(REPORTED|OBSERVED|INFERRED|UNKNOWN)<\/h3>/g, '<h3 class="evidence-heading">$1</h3>'),
+    };
+  };
 
   return (
     <PageShell>
@@ -200,6 +215,7 @@ function ReviewArticlePage() {
           <h1>{issueOne.title}</h1>
           <p className="article-dek">{issueOne.dek}</p>
           <div className="article-meta">
+            <span>By Jose Luis Sanz</span>
             <span>Review period: {issueOne.reviewPeriod}</span>
             <span>Published {issueOne.published}</span>
           </div>
@@ -225,12 +241,10 @@ function ReviewArticlePage() {
 
           <aside className="about-review">
             <p className="kicker">About this review</p>
-            <h2>AI-assisted, human-edited.</h2>
-            <p>Cascade Risk Review is an AI-assisted, human-edited publication.</p>
-            <p>AI is used to search, compare sources, organise evidence and repeatedly apply the Risks In Sync and Gray Zones frameworks.</p>
-            <p>The purpose is partly experimental: repeated application helps us test where the methods are useful, where they produce weak interpretations and how they can be improved.</p>
+            <h2>AI-assisted · Human-edited · Source-backed</h2>
+            <p>Cascade Risk Review uses AI to help search, compare sources, structure evidence and repeatedly apply the Risks In Sync and Gray Zones frameworks.</p>
+            <p>The purpose is partly experimental: repeated application helps identify where the method works, where it produces weak interpretations and how it may need to change.</p>
             <p>Final case selection, interpretation, editing and publication remain human decisions.</p>
-            <p>Reported facts, observations, inferences and unknowns are deliberately separated wherever possible.</p>
           </aside>
         </div>
       </article>
@@ -276,13 +290,11 @@ function AboutPage() {
 
         <section id="why-ai">
           <p className="kicker">The editorial experiment</p>
-          <h2>Why AI?</h2>
-          <p>A method improves by being tested.</p>
-          <p>Historically, applying the same analysis manually across dozens or hundreds of incidents would require enormous time.</p>
+          <h2>Testing Risks In Sync</h2>
+          <p>Risks In Sync is not a finished framework. A method improves by being tested against real incidents.</p>
           <p>AI changes the economics of repetition.</p>
-          <p>It can help collect evidence, structure incidents and apply the same analytical questions again and again.</p>
-          <p>That does not make its conclusions automatically correct. It makes faster iteration possible.</p>
-          <p>The experiment behind Cascade Risk Review is to use that increased repetition while keeping human judgment and source discipline in the loop.</p>
+          <p>It can help collect and compare evidence, structure incidents and apply the same analytical questions repeatedly. That makes it practical to look for useful patterns, weak assumptions, generic conclusions, missing concepts and places where the method forces an interpretation.</p>
+          <p>Repetition does not make a conclusion correct. Human judgment remains responsible for checking evidence, interpreting each case, refining the method and approving publication.</p>
           <div className="responsibility-grid">
             <div>
               <h3>AI assists with</h3>
@@ -294,6 +306,14 @@ function AboutPage() {
             </div>
           </div>
           <a className="primary-link inline" href={REVIEW_PATH}>Read the first review <Arrow>→</Arrow></a>
+        </section>
+
+        <section id="contact" className="author-section">
+          <p className="kicker">Author</p>
+          <h2>Jose Luis Sanz</h2>
+          <p>Jose Luis Sanz has spent more than two decades working with complex claims, incidents and risk.</p>
+          <p>Risks In Sync grew from practical experience analysing failures, dependencies and recovery. The current project is an independent experiment in testing and refining the method against real-world events.</p>
+          <a className="text-link" href="https://www.linkedin.com/in/jlsanz/" rel="me">Contact on LinkedIn <Arrow>→</Arrow></a>
         </section>
       </div>
     </PageShell>
