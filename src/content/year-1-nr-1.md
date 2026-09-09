@@ -138,6 +138,8 @@ The wider transmission system, available alternative supply, operating controls 
 
 Perpetrator, motive, detailed protection sequence, precise balancing response, upstream security gaps and any confirmed connection to other German grid incidents remained unresolved in the evidence reviewed through 7 September 2026.
 
+<!-- PRIVATE_FEEDBACK -->
+
 ## Sources
 
 1. **[Amprion — “Ausfall von Kraftwerkszuleitungen im Rheinland: Untersuchungen zu Vorfall laufen,” 2 September 2026.](https://www.amprion.net/Presse/Presse-Detailseite_98753.html)** Primary transmission-operator statement on the affected feeders, public supply and system stability.
