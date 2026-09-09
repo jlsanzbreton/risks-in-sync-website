@@ -1,4 +1,4 @@
-import { StrictMode, type ReactNode } from "react";
+import { StrictMode, useEffect, useState, type FormEvent, type MouseEvent, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { marked } from "marked";
 import { issueOne } from "./content/year-1-nr-1";
@@ -6,6 +6,7 @@ import reviewMarkdown from "./content/year-1-nr-1.md?raw";
 import "./styles.css";
 
 const REVIEW_PATH = "/review/year-1-nr-1/";
+const CONTACT_POINTER_NAVIGATION_KEY = "risks-in-sync-contact-pointer-navigation";
 
 function Arrow({ children }: { children: ReactNode }) {
   return <span aria-hidden="true">{children}</span>;
@@ -41,11 +42,51 @@ function SiteFooter() {
         </div>
         <div className="footer-meta">
           <p>AI-assisted <span>·</span> Human-edited <span>·</span> Source-backed</p>
-          <a href="/about/#contact">Contact</a>
+          <div className="footer-links">
+            <a href="/privacy/">Privacy</a>
+            <ContactLink />
+          </div>
         </div>
       </div>
     </footer>
   );
+}
+
+function focusContactSection(showFocusRing = true) {
+  const section = document.getElementById("contact");
+  const heading = document.getElementById("contact-title");
+
+  if (!section || !heading) return;
+
+  heading.dataset.focusRing = showFocusRing ? "visible" : "suppressed";
+  heading.focus({ preventScroll: true });
+  section.scrollIntoView({
+    behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+    block: "start",
+  });
+}
+
+function ContactLink() {
+  const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    const path = window.location.pathname.replace(/\/+$/, "") || "/";
+
+    if (path !== "/about") {
+      if (event.detail > 0) {
+        window.sessionStorage.setItem(CONTACT_POINTER_NAVIGATION_KEY, "true");
+      } else {
+        window.sessionStorage.removeItem(CONTACT_POINTER_NAVIGATION_KEY);
+      }
+      return;
+    }
+
+    event.preventDefault();
+    if (window.location.hash !== "#contact") {
+      window.history.pushState(null, "", "/about/#contact");
+    }
+    window.requestAnimationFrame(() => focusContactSection(event.detail === 0));
+  };
+
+  return <a href="/about/#contact" onClick={handleClick}>Contact</a>;
 }
 
 function PageShell({ children }: { children: ReactNode }) {
@@ -98,7 +139,7 @@ function HomePage() {
           <div className="section-intro">
             <p className="kicker">The publication</p>
             <h2>Cascade Risk Review</h2>
-            <p>One recent real-world event. Multiple connected systems. A closer look at propagation, buffers, breakers, Gray Zones and what stopped the event becoming worse.</p>
+            <p>One recent real-world event. Multiple connected systems. A closer look at how a disturbance propagates, where it amplifies or stops, and whether the cascade is contained or becomes a catastrophe.</p>
           </div>
           <LatestIssue />
         </div>
@@ -147,7 +188,7 @@ function ReviewArchivePage() {
       <header className="page-heading wrap">
         <p className="kicker">RISKS IN SYNC</p>
         <h1>Cascade Risk Review</h1>
-        <p className="page-dek">Source-backed analysis of how disturbances move across connected systems—and what stops them.</p>
+        <p className="page-dek">One recent real-world event. Multiple connected systems. A closer look at how a disturbance propagates, where it amplifies or stops, and whether the cascade is contained or becomes a catastrophe.</p>
       </header>
       <section className="archive wrap">
         <LatestIssue compact />
@@ -192,8 +233,99 @@ function CascadeDiagram() {
   );
 }
 
+type FeedbackStatus = "ready" | "submitting" | "accepted" | "error";
+
+function PrivateFeedback() {
+  const [status, setStatus] = useState<FeedbackStatus>("ready");
+  const [comment, setComment] = useState("");
+
+  const submitFeedback = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    setStatus("submitting");
+
+    try {
+      const response = await fetch("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams(new FormData(form) as unknown as Record<string, string>).toString(),
+      });
+
+      if (!response.ok) throw new Error("Feedback submission was not accepted");
+      form.reset();
+      setComment("");
+      setStatus("accepted");
+    } catch {
+      setStatus("error");
+    }
+  };
+
+  return (
+    <section className="private-feedback" aria-labelledby="private-feedback-title">
+      <p className="kicker">Private feedback</p>
+      <h2 id="private-feedback-title">Did the Risks In Sync lens show you something that a conventional account of this incident would probably have missed?</h2>
+
+      {status === "accepted" ? (
+        <p className="feedback-status success" role="status">Thank you. Your private feedback has been recorded.</p>
+      ) : (
+        <form
+          name="private-feedback-year-1-nr-1"
+          method="post"
+          data-netlify="true"
+          data-netlify-honeypot="bot-field"
+          aria-busy={status === "submitting"}
+          onSubmit={submitFeedback}
+        >
+          <input type="hidden" name="form-name" value="private-feedback-year-1-nr-1" />
+          <input type="hidden" name="issue" value="year-1-nr-1" />
+          <p className="honeypot" aria-hidden="true">
+            <label>Leave this field empty <input name="bot-field" tabIndex={-1} autoComplete="off" /></label>
+          </p>
+
+          <fieldset disabled={status === "submitting"}>
+            <legend>Your answer</legend>
+            <div className="feedback-options">
+              <label><input type="radio" name="answer" value="yes_clearly" required /> <span>Yes, clearly</span></label>
+              <label><input type="radio" name="answer" value="not_really" /> <span>Not really</span></label>
+              <label><input type="radio" name="answer" value="hard_to_tell" /> <span>Hard to tell</span></label>
+            </div>
+
+            <div className="feedback-comment">
+              <div className="feedback-comment-heading">
+                <label htmlFor="feedback-comment">Why?</label>
+                <span id="feedback-comment-optional">Optional</span>
+              </div>
+              <textarea
+                id="feedback-comment"
+                name="comment"
+                rows={4}
+                maxLength={400}
+                value={comment}
+                aria-describedby="feedback-comment-optional feedback-character-count feedback-privacy-note"
+                onChange={(event) => setComment(event.target.value)}
+              />
+              <span id="feedback-character-count" className="character-count">{comment.length} / 400</span>
+            </div>
+
+            <button type="submit">{status === "submitting" ? "Sending…" : "Send private feedback"}</button>
+          </fieldset>
+
+          <p id="feedback-privacy-note" className="feedback-privacy-note">
+            Private feedback. No name or email required. The author uses your response only to improve Risks In Sync. Please do not include personal, confidential or sensitive information. Raw responses are deleted within 90 days. <a href="/privacy/">Privacy notice</a>.
+          </p>
+
+          {status === "error" ? (
+            <p className="feedback-status error" role="alert">We couldn't confirm that your feedback was recorded. Your text is still here; please try again later.</p>
+          ) : null}
+        </form>
+      )}
+    </section>
+  );
+}
+
 function ReviewArticlePage() {
   const [beforeDiagram, afterDiagram] = reviewMarkdown.split("<!-- CASCADE_DIAGRAM -->");
+  const [afterDiagramBeforeFeedback, sources] = afterDiagram.split("<!-- PRIVATE_FEEDBACK -->");
   const renderMarkdown = (content: string) => {
     const html = marked.parse(content, { async: false }) as string;
 
@@ -237,7 +369,9 @@ function ReviewArticlePage() {
 
           <div dangerouslySetInnerHTML={renderMarkdown(beforeDiagram)} />
           <CascadeDiagram />
-          <div dangerouslySetInnerHTML={renderMarkdown(afterDiagram)} />
+          <div dangerouslySetInnerHTML={renderMarkdown(afterDiagramBeforeFeedback)} />
+          <PrivateFeedback />
+          <div dangerouslySetInnerHTML={renderMarkdown(sources)} />
 
           <aside className="about-review">
             <p className="kicker">About this review</p>
@@ -253,6 +387,27 @@ function ReviewArticlePage() {
 }
 
 function AboutPage() {
+  useEffect(() => {
+    let frame = 0;
+    const scrollToHash = () => {
+      if (window.location.hash === "#contact") {
+        frame = window.requestAnimationFrame(() => {
+          const cameFromPointer = window.sessionStorage.getItem(CONTACT_POINTER_NAVIGATION_KEY) === "true";
+          window.sessionStorage.removeItem(CONTACT_POINTER_NAVIGATION_KEY);
+          focusContactSection(!cameFromPointer);
+        });
+      }
+    };
+
+    scrollToHash();
+    window.addEventListener("hashchange", scrollToHash);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("hashchange", scrollToHash);
+    };
+  }, []);
+
   return (
     <PageShell>
       <header className="page-heading wrap">
@@ -292,6 +447,7 @@ function AboutPage() {
           <p className="kicker">The editorial experiment</p>
           <h2>Testing Risks In Sync</h2>
           <p>Risks In Sync is not a finished framework. A method improves by being tested against real incidents.</p>
+          <p>Cascade Risk Review follows how a disturbance propagates, where it amplifies or stops, and whether the cascade is contained or becomes a catastrophe.</p>
           <p>AI changes the economics of repetition.</p>
           <p>It can help collect and compare evidence, structure incidents and apply the same analytical questions repeatedly. That makes it practical to look for useful patterns, weak assumptions, generic conclusions, missing concepts and places where the method forces an interpretation.</p>
           <p>Repetition does not make a conclusion correct. Human judgment remains responsible for checking evidence, interpreting each case, refining the method and approving publication.</p>
@@ -310,10 +466,64 @@ function AboutPage() {
 
         <section id="contact" className="author-section">
           <p className="kicker">Author</p>
-          <h2>Jose Luis Sanz</h2>
+          <h2 id="contact-title" tabIndex={-1}>Jose Luis Sanz</h2>
           <p>Jose Luis Sanz has spent more than two decades working with complex claims, incidents and risk.</p>
           <p>Risks In Sync grew from practical experience analysing failures, dependencies and recovery. The current project is an independent experiment in testing and refining the method against real-world events.</p>
           <a className="text-link" href="https://www.linkedin.com/in/jlsanz/" rel="me">Contact on LinkedIn <Arrow>→</Arrow></a>
+        </section>
+      </div>
+    </PageShell>
+  );
+}
+
+function PrivacyPage() {
+  return (
+    <PageShell>
+      <header className="page-heading wrap">
+        <p className="kicker">Privacy</p>
+        <h1>Privacy notice</h1>
+        <p className="page-dek">How private reader feedback is handled on Risks In Sync.</p>
+      </header>
+      <div className="privacy-content article-wrap">
+        <section>
+          <h2>Who is responsible</h2>
+          <p><strong>Jose Luis Sanz</strong>, author and publisher of Risks In Sync, is the controller for reader feedback.</p>
+          <p>You can contact the author, including to exercise a privacy right, through the <a href="https://www.linkedin.com/in/jlsanz/" rel="me">public LinkedIn profile</a>.</p>
+        </section>
+
+        <section>
+          <h2>What is collected and why</h2>
+          <p>The form does not ask for your name or email address. It stores your selected answer, any optional comment, the review it relates to and the time the provider accepts it. Netlify may also process limited technical information needed to deliver and protect the service.</p>
+          <p>The sole editorial purpose is to understand whether the Risks In Sync method is useful and how it can be improved. Feedback is not published, used for marketing or profiling, or transferred automatically to AI systems.</p>
+        </section>
+
+        <section>
+          <h2>Legal basis</h2>
+          <p>The legal basis is the author’s legitimate interest in securely operating and improving this independent, non-commercial publication (Article 6(1)(f) GDPR).</p>
+          <p>You may object to this processing at any time. If you do not wish to provide feedback, you can read the publication without using the form.</p>
+        </section>
+
+        <section>
+          <h2>Provider and international transfers</h2>
+          <p>Netlify, Inc. hosts the site and receives form submissions as a service provider. Its current data processing agreement covers customer data and provides transfer safeguards, including the EU–US Data Privacy Framework and, where that mechanism does not apply, the European Commission's Standard Contractual Clauses.</p>
+          <p>See Netlify's <a href="https://www.netlify.com/pdf/netlify-dpa.pdf">data processing agreement</a> and <a href="https://www.netlify.com/legal/subprocessors/">current subprocessor list</a>.</p>
+        </section>
+
+        <section>
+          <h2>Retention and access</h2>
+          <p>Raw form submissions are kept for no more than 90 days after receipt and are then deleted from the private form inbox. Any temporary export follows the same deadline. Aggregated and truly de-identified themes and editorial decisions may be kept.</p>
+          <p>Access through the Netlify account is restricted to the author. Netlify and its subprocessors may access data only as needed to provide and protect the service under the applicable terms. Hosting and security records follow Netlify's service retention and deletion procedures.</p>
+        </section>
+
+        <section>
+          <h2>Your privacy rights</h2>
+          <p>You may ask to access, correct or delete feedback that can reasonably be identified, restrict its use, or object to its processing. Contact the author and provide enough details to locate the response. You may also lodge a complaint with the <a href="https://www.aepd.es/">Spanish Data Protection Agency (AEPD)</a>.</p>
+        </section>
+
+        <section>
+          <h2>Cookies and changes</h2>
+          <p>Risks In Sync does not use audience analytics, advertising trackers or marketing cookies. This notice will be updated before feedback is used for a materially different purpose or a different provider is introduced.</p>
+          <p className="privacy-updated">Last updated: 10 September 2026.</p>
         </section>
       </div>
     </PageShell>
@@ -324,6 +534,7 @@ function App() {
   const path = window.location.pathname.replace(/\/+$/, "") || "/";
 
   if (path === "/about") return <AboutPage />;
+  if (path === "/privacy") return <PrivacyPage />;
   if (path === "/review/year-1-nr-1") return <ReviewArticlePage />;
   if (path === "/review") return <ReviewArchivePage />;
   return <HomePage />;

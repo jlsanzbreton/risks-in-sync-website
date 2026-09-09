@@ -1,6 +1,6 @@
 # Risks In Sync
 
-Public website for **Risks In Sync** and **Cascade Risk Review**. It studies how disturbances propagate through connected physical, digital and human systems.
+Public website for **Risks In Sync** and **Cascade Risk Review**. The publication follows how disturbances propagate through connected physical, digital and human systems, including cascades that are contained and cascades that become catastrophes.
 
 > Editorial principle: **evidence is not interpretation**. Reviews distinguish **REPORTED**, **OBSERVED**, **INFERRED** and **UNKNOWN**.
 
@@ -35,10 +35,13 @@ Routes:
 - `/review/` — archive
 - `/review/year-1-nr-1/` — first official issue
 - `/about/` — method, Gray Zones and AI experiment
+- `/privacy/` — privacy notice for private reader feedback
 
 Year 1 · Nr. 1 is complete in `src/content/year-1-nr-1.md`: full article, cascade diagram, required analysis, evidence status, six real source URLs and AI-assisted/human-edited disclosure. No source placeholders remain.
 
-This is intentionally static: no CMS, database, authentication, functions, analytics, AI calls or automatic publishing.
+This is intentionally static: no CMS, custom database, authentication, functions, analytics, AI calls or automatic publishing. Private reader feedback is handled by Netlify Forms and reviewed manually.
+
+The feedback launch decision, legitimate-interest assessment, retention rule and operating checklist are in `docs/private-feedback-runbook.md`.
 
 ## Architecture
 
@@ -153,7 +156,7 @@ Avoid gradients, dashboards, animations, excessive cards or startup-style featur
 - Issue one remains text-led. The supplied screenshot appears to derive from Amprion's Dortmund headquarters press image, which Amprion permits for editorial use with attribution. It was not published because it depicts the company headquarters rather than the incident site, and the screenshot itself is not a traceable source asset. The existing `heroImage` field remains ready for one directly sourced image of the Rommerskirchen/Amprion infrastructure, with creator, source and licence recorded in its caption.
 - The PNG icon is large and can be optimised later while retaining the source asset.
 - Sources currently appear in both Markdown and TypeScript; the content automation should remove this duplication.
-- The launch site collects no user data.
+- The site has no accounts, audience analytics, advertising trackers or marketing cookies. Optional private feedback is processed as described on `/privacy/` and in `docs/private-feedback-runbook.md`.
 
 ## Launch record
 

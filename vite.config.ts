@@ -11,6 +11,7 @@ export default defineConfig({
       input: {
         home: fromRoot("index.html"),
         about: fromRoot("about/index.html"),
+        privacy: fromRoot("privacy/index.html"),
         review: fromRoot("review/index.html"),
         issueOne: fromRoot("review/year-1-nr-1/index.html"),
       },
