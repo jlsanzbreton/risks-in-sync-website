@@ -134,6 +134,24 @@ function HomePage() {
         </div>
       </section>
 
+      <figure className="home-illustration wrap">
+        <picture>
+          <source media="(max-width: 760px)" srcSet="/risks-in-sync-background-noise-960.webp" />
+          <img
+            src="/risks-in-sync-background-noise-1672.webp"
+            width="1672"
+            height="941"
+            loading="lazy"
+            decoding="async"
+            alt={'Two wildebeest stand among crocodiles beside a sign reading "Danger crocodiles ahead." One asks, "What\'s that sign?" The other replies, "Just background noise."'}
+          />
+        </picture>
+        <figcaption>
+          <strong>Gray Zones · Signal</strong>
+          <span>When a visible warning becomes familiar enough to be treated as background noise.</span>
+        </figcaption>
+      </figure>
+
       <section className="section dark-section">
         <div className="wrap two-column">
           <div className="section-intro">
