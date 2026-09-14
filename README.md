@@ -8,6 +8,8 @@ Public website for **Risks In Sync** and **Cascade Risk Review**. The publicatio
 
 MVP launched 8 September 2026.
 
+The data-driven Publication Pack pipeline reached production on 14 September 2026 through website PR #3 (`305837d`). The live site can now publish a new review from only its validated `review.md` and declared assets; the homepage, archive, issue route and metadata are generated without per-issue React or HTML edits.
+
 | Item | Value |
 | --- | --- |
 | Website | https://risksinsync.com |
@@ -42,6 +44,12 @@ Year 1 · Nr. 1 is complete in `src/content/reviews/year-1-nr-1/review.md`: full
 This is intentionally static: no CMS, custom database, authentication, functions, analytics, AI calls or automatic publishing. Private reader feedback is handled by Netlify Forms and reviewed manually.
 
 The feedback launch decision, legitimate-interest assessment, retention rule and operating checklist are in `docs/private-feedback-runbook.md`.
+
+Operational documentation:
+
+- [Publication Pack v1 contract](docs/publication-pack-v1.md)
+- [Private feedback runbook](docs/private-feedback-runbook.md)
+- [Homepage and dynamic-pack design QA](design-qa.md)
 
 ## Architecture
 
@@ -95,10 +103,13 @@ Release only after human editorial approval:
 
 ```sh
 git push origin dev
+```
+
+Open a GitHub PR from `dev` to `main`, wait for the checks and Deploy Preview, and merge it manually. Then update the local production branch:
+
+```sh
 git switch main
 git pull --ff-only origin main
-git merge --ff-only dev
-git push origin main
 git switch dev
 ```
 
@@ -108,21 +119,38 @@ Never force-push. If branches diverge, inspect them instead of forcing a merge. 
 
 The hand-off from Risks In Sync Studio is a Publication Pack containing `review.md` and an optional `assets/` directory. See [`docs/publication-pack-v1.md`](docs/publication-pack-v1.md) and start from `src/content/reviews/_template/review.md`.
 
+Scout should normally deliver the complete pack as one ZIP. An unpacked folder is equivalent and convenient during local inspection; standalone `review.md` is intended for reviews with no assets or when assets will be added later in Studio. A pack with images uses this shape:
+
+```text
+year-1-nr-2/
+├── review.md
+└── assets/
+    └── homepage.webp
+```
+
+Normal Studio flow:
+
+1. Import and edit the pack in Review Desk, resolve validation issues and complete the five confirmations.
+2. Download the immutable backup and create `studio/<slug>` plus its PR directly to Website `main`.
+3. Review the Netlify Deploy Preview on mobile and desktop. Confirm `/`, `/review/`, `/review/<slug>/`, claims, evidence labels, sources, imagery, rights and metadata.
+4. Merge manually in GitHub. Wait for production, then refresh Studio until the record becomes Published.
+
+Manual recovery flow, used only if the Studio bridge is unavailable:
+
 1. Work on `dev` and receive the reviewed Publication Pack.
 2. Copy `review.md` to `src/content/reviews/<slug>/review.md`.
 3. Copy every declared image to `public/review/<slug>/assets/`, preserving the `assets/<filename>` paths used in Markdown.
-4. Run `npm run check:reviews`. Fix editorial data at its source; the validator never repairs or defaults it.
-5. Run `npm test` and `npm run build`.
-6. Run `npm run preview` and review `/`, `/review/` and `/review/<slug>/` on mobile and desktop. Confirm claims, evidence labels, sources, image rights and metadata.
-7. Open a PR from `dev`. Publication occurs only when a human approves and merges it to `main`.
+4. Run `npm run check:reviews`, `npm test` and `npm run build`. Fix editorial data at its source; the validator never repairs or defaults it.
+5. Run `npm run preview` and inspect the same routes and editorial checks as above.
+6. Open a PR from `dev` to `main`. Publication occurs only when a human approves and merges it.
 
 Do not edit `src/main.tsx`, `vite.config.ts`, generated HTML, the generated manifest, the homepage or the archive for a new issue. Directories under `src/content/reviews/` whose names begin with `_` are templates or supporting material and are not published.
 
 Publishing flow:
 
 ```text
-Studio/editor pack → validated Markdown + assets → local preview
-→ human evidence approval → dev → main → Netlify
+Scout pack → Studio validation and human approval → studio/<slug>
+→ PR to main → Netlify Deploy Preview → manual merge → production
 ```
 
 ## UX/UI plan
@@ -159,3 +187,5 @@ Avoid gradients, dashboards, animations, excessive cards or startup-style featur
 ## Launch record
 
 On 8 September 2026 we built the MVP, published Cascade Risk Review Year 1 · Nr. 1, connected GitHub to Netlify, retained DNS at Porkbun, connected apex and `www`, and verified HTTPS. `main` is the production snapshot; future work starts from `dev`.
+
+On 14 September 2026 we deployed the generic Publication Pack renderer and validator, optional issue-controlled homepage illustration and compact caption, neutral cascade outcome model, and the Studio-to-Website review-PR boundary. The GitHub App is installed only on this repository with Metadata read-only, Contents read/write and Pull requests read/write. Studio cannot merge or write directly to `main`; the first real Scout pack remains the next end-to-end editorial test.

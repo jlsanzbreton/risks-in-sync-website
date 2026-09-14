@@ -13,6 +13,36 @@ Paths inside Markdown and frontmatter remain relative to the pack, for example `
 
 The canonical machine-readable frontmatter contract is [`schemas/publication-pack-v1.schema.json`](../schemas/publication-pack-v1.schema.json). Unknown fields are rejected. Semantic and editorial rules that JSON Schema cannot express are enforced by `scripts/reviews.ts`.
 
+## Delivery formats and assets
+
+The three Studio import choices represent the same Publication Pack contract:
+
+- **ZIP:** preferred Scout hand-off for a complete pack because the Markdown and assets travel as one file.
+- **Folder:** the unpacked equivalent, useful while inspecting or adjusting files locally.
+- **Standalone `review.md`:** suitable when `images: []`, or when the editor will add the declared assets later in Studio. Declared but absent assets are blocking errors.
+
+ZIP and folder imports may have one harmless outer directory. After that directory is removed, `review.md` must be at the pack root and every other file must remain under `assets/`:
+
+```text
+year-1-nr-2/
+├── review.md
+└── assets/
+    ├── homepage.webp
+    └── cascade-map.png
+```
+
+Use lowercase ASCII filenames with hyphens and make the frontmatter path match exactly, for example `assets/homepage.webp`. Studio recognises AVIF, GIF, JPEG, PNG and WebP image assets. WebP is the default recommendation; JPEG remains useful for photographs and PNG for line art that does not compress cleanly.
+
+For a homepage illustration, prepare a 16:9 source such as 1600 × 900 px. The website renders it at 16:9 with `object-fit: cover`, so a different ratio may be cropped. Keep essential text and visual meaning away from the outer edges.
+
+The Studio publication bridge enforces these transport limits before a PR can be created:
+
+- 3 MB maximum for any single asset.
+- 4 MB maximum for the complete unencoded `review.md` plus all assets.
+- 50 assets maximum.
+
+For a single homepage illustration, aim below 1 MB so the complete pack remains comfortably inside the bridge limit.
+
 ## Required frontmatter
 
 The fields and shape are those in the canonical schema. Important rules:
