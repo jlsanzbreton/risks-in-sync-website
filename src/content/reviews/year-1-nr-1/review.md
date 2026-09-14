@@ -1,3 +1,103 @@
+---
+schema_version: 1
+id: crr-y1-n1
+slug: year-1-nr-1
+status: ready_for_pr
+
+issue:
+  year: 1
+  number: 1
+  label: "Year 1 · Nr. 1"
+
+review_period:
+  start: 2026-09-01
+  end: 2026-09-07
+
+publication_date: 2026-09-08
+title: "A 3 GW shock hit the German power system. Most people noticed nothing."
+dek: "Five large generating units were disconnected after a suspected sabotage incident. The grid absorbed the shock. That may be the most interesting part of the story."
+summary: "Five large generating units suddenly disconnected from the German grid after suspected sabotage. Around 3 GW of live production disappeared—yet the wider electricity supply remained stable."
+author: "Jose Luis Sanz"
+language: en
+method_version: risks-in-sync-v1
+editorial: "AI-assisted · Human-edited · Source-backed"
+
+cascade:
+  title: "Propagation path"
+  subtitle: "How the disturbance propagated and was contained"
+  steps:
+    - "Physical interference"
+    - "Short circuit"
+    - "Transmission connection"
+    - "Five generating units"
+    - "≈3 GW output lost"
+    - "Grid control + reserves"
+  outcome_status: contained
+  observed_outcome: "The wider electricity supply remained stable after grid controls and reserves absorbed the generation loss."
+  counterfactual_outcome: "A wider blackout if the grid had not absorbed the sudden loss."
+  evidence_status: INFERRED
+  note: "A simplified model based on public reporting, not a technical incident reconstruction."
+
+sources:
+  - id: amprion-2026-09-02
+    title: "Ausfall von Kraftwerkszuleitungen im Rheinland: Untersuchungen zu Vorfall laufen"
+    publisher: "Amprion"
+    url: "https://www.amprion.net/Presse/Presse-Detailseite_98753.html"
+    published_date: 2026-09-02
+    accessed_date: 2026-09-07
+    kind: primary
+    verification: verified
+    note: "Primary transmission-operator statement on the affected feeders, public supply and system stability."
+  - id: rwe-2026-09-02
+    title: "Power stations affected by incident near substation"
+    publisher: "RWE"
+    url: "https://www.rwe.com/en/press/rwe-power/2026-09-02-rwe-power-plants-in-the-rhenish-region-affected-by-an-incident-near-a-substation/"
+    published_date: 2026-09-02
+    accessed_date: 2026-09-07
+    kind: primary
+    verification: verified
+    note: "Primary generator statement on the five units, installed capacity, live output and restoration."
+  - id: reuters-2026-09-02
+    title: "Germany probes second power grid sabotage case"
+    publisher: "Reuters via Internazionale"
+    url: "https://www.internazionale.it/ultime-notizie-reuters/2026/09/02/german-power-grid-under-fresh-sabotage-attack-police-say"
+    published_date: 2026-09-02
+    accessed_date: 2026-09-07
+    kind: secondary
+    verification: verified
+    note: "Independent reporting on the investigation, generation loss and grid stability."
+  - id: ap-2026-09-02
+    title: "Germany probes suspected sabotage after disruption at 2 power substations"
+    publisher: "Associated Press"
+    url: "https://apnews.com/article/ef9c21908f232651d056d7462330e2b7"
+    published_date: 2026-09-02
+    accessed_date: 2026-09-07
+    kind: secondary
+    verification: verified
+    note: "Independent reporting on the suspected short-circuit mechanism and wider investigation."
+  - id: zeit-dpa-2026-09-02
+    title: "Drei von fünf Kraftwerksblöcken nach Sabotage wieder am Netz"
+    publisher: "Die Zeit / dpa"
+    url: "https://www.zeit.de/news/2026-09/02/zwei-von-fuenf-kraftwerksbloecken-nach-sabotage-wieder-am-netz"
+    published_date: 2026-09-02
+    accessed_date: 2026-09-07
+    kind: secondary
+    verification: verified
+    note: "Restoration update on the staged return of generating units."
+  - id: brandenburg-police-2026-09-02
+    title: "Medieninformation bzgl. des Anschlags in Turnow-Preilack"
+    publisher: "Brandenburg Police"
+    url: "https://polizei.brandenburg.de/pressemeldung/medieninformation-bzgl-des-anschlags-in-/5711687"
+    published_date: 2026-09-02
+    accessed_date: 2026-09-07
+    kind: context
+    verification: verified
+    note: "Primary statement on the separate Brandenburg incident, included as context rather than evidence of a connection."
+
+# No issue-specific image was published; see docs/publication-pack-v1.md.
+images: []
+---
+
 On the evening of 1 September, a disturbance near an Amprion high-voltage substation in Germany's Rhineland disconnected five large generating units from the grid.
 
 Together, the units represented **4.2 GW of installed capacity** and were producing about **3 GW at the time**. That sounds like the start of a blackout story.
@@ -140,11 +240,4 @@ Perpetrator, motive, detailed protection sequence, precise balancing response, u
 
 <!-- PRIVATE_FEEDBACK -->
 
-## Sources
-
-1. **[Amprion — “Ausfall von Kraftwerkszuleitungen im Rheinland: Untersuchungen zu Vorfall laufen,” 2 September 2026.](https://www.amprion.net/Presse/Presse-Detailseite_98753.html)** Primary transmission-operator statement on the affected feeders, public supply and system stability.
-2. **[RWE — “Power stations affected by incident near substation,” 2 September 2026.](https://www.rwe.com/en/press/rwe-power/2026-09-02-rwe-power-plants-in-the-rhenish-region-affected-by-an-incident-near-a-substation/)** Primary generator statement on the five units, installed capacity, live output and restoration.
-3. **[Reuters — “Germany probes second power grid sabotage case,” 2 September 2026.](https://www.internazionale.it/ultime-notizie-reuters/2026/09/02/german-power-grid-under-fresh-sabotage-attack-police-say)** Independent reporting on the investigation, generation loss and grid stability.
-4. **[Associated Press — “Germany probes suspected sabotage after disruption at 2 power substations,” 2 September 2026.](https://apnews.com/article/ef9c21908f232651d056d7462330e2b7)** Independent reporting on the suspected short-circuit mechanism and wider investigation.
-5. **[Die Zeit / dpa — “Drei von fünf Kraftwerksblöcken nach Sabotage wieder am Netz,” 2 September 2026.](https://www.zeit.de/news/2026-09/02/zwei-von-fuenf-kraftwerksbloecken-nach-sabotage-wieder-am-netz)** Restoration update on the staged return of generating units.
-6. **[Brandenburg Police — “Medieninformation bzgl. des Anschlags in Turnow-Preilack,” 2 September 2026.](https://polizei.brandenburg.de/pressemeldung/medieninformation-bzgl-des-anschlags-in-/5711687)** Primary statement on the separate Brandenburg incident, included as context rather than evidence of a connection.
+## SOURCES

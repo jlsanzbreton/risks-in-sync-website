@@ -1,12 +1,12 @@
 import { StrictMode, useEffect, useState, type FormEvent, type MouseEvent, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
-import { marked } from "marked";
-import { issueOne } from "./content/year-1-nr-1";
-import reviewMarkdown from "./content/year-1-nr-1.md?raw";
+import { reviews } from "./generated/reviews";
+import type { CascadeOutcomeStatus, ReviewImage, ReviewIssue, ReviewSource } from "./content/review-types";
 import "./styles.css";
 
-const REVIEW_PATH = "/review/year-1-nr-1/";
 const CONTACT_POINTER_NAVIGATION_KEY = "risks-in-sync-contact-pointer-navigation";
+const latestReview = reviews[0];
+const firstReview = reviews.at(-1) ?? latestReview;
 
 function Arrow({ children }: { children: ReactNode }) {
   return <span aria-hidden="true">{children}</span>;
@@ -100,21 +100,23 @@ function PageShell({ children }: { children: ReactNode }) {
   );
 }
 
-function LatestIssue({ compact = false }: { compact?: boolean }) {
+function LatestIssue({ compact = false, review = latestReview }: { compact?: boolean; review?: ReviewIssue }) {
   return (
     <article className={compact ? "latest-card compact" : "latest-card"}>
       <div className="issue-line">
-        <span>{issueOne.issue}</span>
-        <span>{issueOne.published}</span>
+        <span>{review.issue.label}</span>
+        <span>{review.publicationDateLabel}</span>
       </div>
-      <h3>{issueOne.title}</h3>
-      <p>Five large generating units suddenly disconnected from the German grid after suspected sabotage. Around 3 GW of live production disappeared—yet the wider electricity supply remained stable.</p>
-      <a className="text-link" href={REVIEW_PATH}>Read the review <Arrow>→</Arrow></a>
+      <h3>{review.title}</h3>
+      <p>{review.summary}</p>
+      <a className="text-link" href={review.path}>Read the review <Arrow>→</Arrow></a>
     </article>
   );
 }
 
 function HomePage() {
+  const homepageImage = latestReview.images.find((image) => image.role === "homepage");
+
   return (
     <PageShell>
       <section className="home-hero wrap">
@@ -125,9 +127,9 @@ function HomePage() {
           </div>
           <div className="hero-copy">
             <p>Risks In Sync explores how disturbances move through connected physical, digital and human systems—and why some failures stop while others become cascades.</p>
-            <a className="hero-review-link" href={REVIEW_PATH}>
-              <span className="hero-review-meta"><b>Cascade Risk Review</b><small>{issueOne.issue}</small></span>
-              <strong>{issueOne.title}</strong>
+            <a className="hero-review-link" href={latestReview.path}>
+              <span className="hero-review-meta"><b>Cascade Risk Review</b><small>{latestReview.issue.label}</small></span>
+              <strong>{latestReview.title}</strong>
               <span className="hero-review-action">Read the review <Arrow>→</Arrow></span>
             </a>
           </div>
@@ -135,20 +137,29 @@ function HomePage() {
       </section>
 
       <figure className="home-illustration wrap">
-        <picture>
-          <source media="(max-width: 760px)" srcSet="/risks-in-sync-background-noise-960.webp" />
+        {homepageImage ? (
           <img
-            src="/risks-in-sync-background-noise-1672.webp"
-            width="1672"
-            height="941"
+            src={imageUrl(latestReview, homepageImage)}
             loading="lazy"
             decoding="async"
-            alt={'Two wildebeest stand among crocodiles beside a sign reading "Danger crocodiles ahead." One asks, "What\'s that sign?" The other replies, "Just background noise."'}
+            alt={homepageImage.alt}
           />
-        </picture>
+        ) : (
+          <picture>
+            <source media="(max-width: 760px)" srcSet="/risks-in-sync-background-noise-960.webp" />
+            <img
+              src="/risks-in-sync-background-noise-1672.webp"
+              width="1672"
+              height="941"
+              loading="lazy"
+              decoding="async"
+              alt={'Two wildebeest stand among crocodiles beside a sign reading "Danger crocodiles ahead." One asks, "What\'s that sign?" The other replies, "Just background noise."'}
+            />
+          </picture>
+        )}
         <figcaption>
-          <strong>Gray Zones · Signal</strong>
-          <span>When a visible warning becomes familiar enough to be treated as background noise.</span>
+          <strong>{homepageImage?.label ?? "Gray Zones · Signal"}</strong>
+          <span>{homepageImage?.caption ?? "When a visible warning becomes familiar enough to be treated as background noise."}</span>
         </figcaption>
       </figure>
 
@@ -209,7 +220,7 @@ function ReviewArchivePage() {
         <p className="page-dek">One recent real-world event. Multiple connected systems. A closer look at how a disturbance propagates, where it amplifies or stops, and whether the cascade is contained or becomes a catastrophe.</p>
       </header>
       <section className="archive wrap">
-        <LatestIssue compact />
+        {reviews.map((review) => <LatestIssue compact review={review} key={review.slug} />)}
       </section>
     </PageShell>
   );
@@ -219,43 +230,56 @@ function EvidenceTag({ children }: { children: ReactNode }) {
   return <span className="evidence-tag">{children}</span>;
 }
 
-function CascadeDiagram() {
-  const steps = [
-    "Physical interference",
-    "Short circuit",
-    "Transmission connection",
-    "Five generating units",
-    "≈3 GW output lost",
-    "Grid control + reserves",
-    "Stability maintained",
-  ];
+const outcomeStatusLabels: Record<CascadeOutcomeStatus, string> = {
+  contained: "Contained",
+  partially_propagated: "Partially propagated",
+  fully_propagated: "Fully propagated",
+  ongoing: "Ongoing",
+  uncertain: "Uncertain",
+};
 
+function CascadeDiagram({ review }: { review: ReviewIssue }) {
+  const { cascade } = review;
   return (
     <figure className="cascade-figure" aria-labelledby="cascade-caption">
       <figcaption id="cascade-caption">
-        <span>Propagation path</span>
-        <strong>Where the cascade stopped</strong>
+        <span>{cascade.title}</span>
+        <strong>{cascade.subtitle}</strong>
       </figcaption>
       <div className="cascade-flow">
-        {steps.map((step, index) => (
-          <div className="flow-step" key={step}>
-            <div className={index === steps.length - 1 ? "flow-node success" : "flow-node"}>{step}</div>
-            {index < steps.length - 1 ? <div className="flow-arrow" aria-hidden="true">↓</div> : null}
+        {cascade.steps.map((step, index) => (
+          <div className="flow-step" key={`${index}-${step}`}>
+            <div className="flow-node">{step}</div>
+            <div className="flow-arrow" aria-hidden="true">↓</div>
           </div>
         ))}
-        <div className="stop-line" aria-hidden="true"><span>×</span></div>
-        <div className="flow-node stopped">Wider blackout</div>
+        <div className={`flow-node observed-outcome outcome-${cascade.outcome_status}`}>
+          <small>Observed outcome · {outcomeStatusLabels[cascade.outcome_status]}</small>
+          <span>{cascade.observed_outcome}</span>
+        </div>
+        {cascade.counterfactual_outcome ? (
+          <div className="counterfactual-outcome">
+            <small>Alternative outcome</small>
+            <div className="flow-node">{cascade.counterfactual_outcome}</div>
+          </div>
+        ) : null}
       </div>
-      <p className="figure-note"><EvidenceTag>INFERRED</EvidenceTag> A simplified model based on public reporting, not a technical incident reconstruction.</p>
+      <p className="figure-note"><EvidenceTag>{cascade.evidence_status}</EvidenceTag> {cascade.note}</p>
     </figure>
   );
 }
 
 type FeedbackStatus = "ready" | "submitting" | "accepted" | "error";
 
-function PrivateFeedback() {
+function PrivateFeedback({ slug }: { slug: string }) {
   const [status, setStatus] = useState<FeedbackStatus>("ready");
   const [comment, setComment] = useState("");
+  const formName = `private-feedback-${slug}`;
+  const titleId = `private-feedback-title-${slug}`;
+  const commentId = `feedback-comment-${slug}`;
+  const optionalId = `feedback-comment-optional-${slug}`;
+  const countId = `feedback-character-count-${slug}`;
+  const privacyId = `feedback-privacy-note-${slug}`;
 
   const submitFeedback = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -279,23 +303,23 @@ function PrivateFeedback() {
   };
 
   return (
-    <section className="private-feedback" aria-labelledby="private-feedback-title">
+    <section className="private-feedback" aria-labelledby={titleId}>
       <p className="kicker">Private feedback</p>
-      <h2 id="private-feedback-title">Did the Risks In Sync lens show you something that a conventional account of this incident would probably have missed?</h2>
+      <h2 id={titleId}>Did the Risks In Sync lens show you something that a conventional account of this incident would probably have missed?</h2>
 
       {status === "accepted" ? (
         <p className="feedback-status success" role="status">Thank you. Your private feedback has been recorded.</p>
       ) : (
         <form
-          name="private-feedback-year-1-nr-1"
+          name={formName}
           method="post"
           data-netlify="true"
           data-netlify-honeypot="bot-field"
           aria-busy={status === "submitting"}
           onSubmit={submitFeedback}
         >
-          <input type="hidden" name="form-name" value="private-feedback-year-1-nr-1" />
-          <input type="hidden" name="issue" value="year-1-nr-1" />
+          <input type="hidden" name="form-name" value={formName} />
+          <input type="hidden" name="issue" value={slug} />
           <p className="honeypot" aria-hidden="true">
             <label>Leave this field empty <input name="bot-field" tabIndex={-1} autoComplete="off" /></label>
           </p>
@@ -310,25 +334,25 @@ function PrivateFeedback() {
 
             <div className="feedback-comment">
               <div className="feedback-comment-heading">
-                <label htmlFor="feedback-comment">Why?</label>
-                <span id="feedback-comment-optional">Optional</span>
+                <label htmlFor={commentId}>Why?</label>
+                <span id={optionalId}>Optional</span>
               </div>
               <textarea
-                id="feedback-comment"
+                id={commentId}
                 name="comment"
                 rows={4}
                 maxLength={400}
                 value={comment}
-                aria-describedby="feedback-comment-optional feedback-character-count feedback-privacy-note"
+                aria-describedby={`${optionalId} ${countId} ${privacyId}`}
                 onChange={(event) => setComment(event.target.value)}
               />
-              <span id="feedback-character-count" className="character-count">{comment.length} / 400</span>
+              <span id={countId} className="character-count">{comment.length} / 400</span>
             </div>
 
             <button type="submit">{status === "submitting" ? "Sending…" : "Send private feedback"}</button>
           </fieldset>
 
-          <p id="feedback-privacy-note" className="feedback-privacy-note">
+          <p id={privacyId} className="feedback-privacy-note">
             Private feedback. No name or email required. The author uses your response only to improve Risks In Sync. Please do not include personal, confidential or sensitive information. Raw responses are deleted within 90 days. <a href="/privacy/">Privacy notice</a>.
           </p>
 
@@ -341,18 +365,36 @@ function PrivateFeedback() {
   );
 }
 
-function ReviewArticlePage() {
-  const [beforeDiagram, afterDiagram] = reviewMarkdown.split("<!-- CASCADE_DIAGRAM -->");
-  const [afterDiagramBeforeFeedback, sources] = afterDiagram.split("<!-- PRIVATE_FEEDBACK -->");
-  const renderMarkdown = (content: string) => {
-    const html = marked.parse(content, { async: false }) as string;
+function SafeHtml({ html }: { html: string }) {
+  return <div dangerouslySetInnerHTML={{ __html: html }} />;
+}
 
-    return {
-      __html: html
-        .replace(/(<h2>Sources<\/h2>\s*)<ol>/, '$1<ol class="sources-list">')
-        .replace(/<h3>(REPORTED|OBSERVED|INFERRED|UNKNOWN)<\/h3>/g, '<h3 class="evidence-heading">$1</h3>'),
-    };
-  };
+function imageUrl(review: ReviewIssue, image: ReviewImage): string {
+  return `/review/${review.slug}/${image.path}`;
+}
+
+function sourceDate(source: ReviewSource): string {
+  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })
+    .format(new Date(`${source.published_date}T00:00:00Z`));
+}
+
+function ReviewSources({ sources }: { sources: ReviewSource[] }) {
+  return (
+    <section className="review-sources" aria-labelledby="review-sources-title">
+      <h2 id="review-sources-title">Sources</h2>
+      <ol className="sources-list">
+        {sources.map((source) => (
+          <li key={source.id}>
+            <strong><a href={source.url}>{source.publisher} — “{source.title},” {sourceDate(source)}.</a></strong>{" "}{source.note}
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
+function ReviewArticlePage({ review }: { review: ReviewIssue }) {
+  const heroImage = review.images.find((image) => image.role === "hero");
 
   return (
     <PageShell>
@@ -360,21 +402,31 @@ function ReviewArticlePage() {
         <header className="article-header article-wrap">
           <div className="article-series">
             <span>Cascade Risk Review</span>
-            <span>{issueOne.issue}</span>
+            <span>{review.issue.label}</span>
           </div>
-          <h1>{issueOne.title}</h1>
-          <p className="article-dek">{issueOne.dek}</p>
+          <h1>{review.title}</h1>
+          <p className="article-dek">{review.dek}</p>
           <div className="article-meta">
-            <span>By Jose Luis Sanz</span>
-            <span>Review period: {issueOne.reviewPeriod}</span>
-            <span>Published {issueOne.published}</span>
+            <span>By {review.author}</span>
+            <span>Review period: {review.reviewPeriodLabel}</span>
+            <span>Published {review.publicationDateLabel}</span>
           </div>
         </header>
 
-        {issueOne.heroImage ? (
+        {heroImage ? (
           <figure className="article-image article-wrap">
-            <img src={issueOne.heroImage.src} alt={issueOne.heroImage.alt} />
-            {issueOne.heroImage.caption ? <figcaption>{issueOne.heroImage.caption}</figcaption> : null}
+            <img src={imageUrl(review, heroImage)} alt={heroImage.alt} />
+            {heroImage.caption || heroImage.credit || heroImage.rights_basis ? (
+              <figcaption>
+                {heroImage.caption ? <span>{heroImage.caption} · </span> : null}
+                {heroImage.credit ? (
+                  heroImage.source_url
+                    ? <a href={heroImage.source_url}>Credit: {heroImage.credit}</a>
+                    : <span>Credit: {heroImage.credit}</span>
+                ) : null}
+                {heroImage.rights_basis ? <span> · {heroImage.rights_basis}</span> : null}
+              </figcaption>
+            ) : null}
           </figure>
         ) : null}
 
@@ -385,15 +437,16 @@ function ReviewArticlePage() {
             <p>Reported facts, public outcomes, analytical inferences and unknowns are separated throughout this review.</p>
           </aside>
 
-          <div dangerouslySetInnerHTML={renderMarkdown(beforeDiagram)} />
-          <CascadeDiagram />
-          <div dangerouslySetInnerHTML={renderMarkdown(afterDiagramBeforeFeedback)} />
-          <PrivateFeedback />
-          <div dangerouslySetInnerHTML={renderMarkdown(sources)} />
+          <SafeHtml html={review.html.beforeCascade} />
+          <CascadeDiagram review={review} />
+          <SafeHtml html={review.html.afterCascade} />
+          <PrivateFeedback slug={review.slug} />
+          <SafeHtml html={review.html.afterFeedback} />
+          <ReviewSources sources={review.sources} />
 
           <aside className="about-review">
             <p className="kicker">About this review</p>
-            <h2>AI-assisted · Human-edited · Source-backed</h2>
+            {review.editorial ? <h2>{review.editorial}</h2> : null}
             <p>Cascade Risk Review uses AI to help search, compare sources, structure evidence and repeatedly apply the Risks In Sync and Gray Zones frameworks.</p>
             <p>The purpose is partly experimental: repeated application helps identify where the method works, where it produces weak interpretations and how it may need to change.</p>
             <p>Final case selection, interpretation, editing and publication remain human decisions.</p>
@@ -479,7 +532,7 @@ function AboutPage() {
               <ul><li>selecting what deserves attention;</li><li>separating fact from interpretation;</li><li>refining the method;</li><li>approving publication.</li></ul>
             </div>
           </div>
-          <a className="primary-link inline" href={REVIEW_PATH}>Read the first review <Arrow>→</Arrow></a>
+          <a className="primary-link inline" href={firstReview.path}>Read the first review <Arrow>→</Arrow></a>
         </section>
 
         <section id="contact" className="author-section">
@@ -550,10 +603,11 @@ function PrivacyPage() {
 
 function App() {
   const path = window.location.pathname.replace(/\/+$/, "") || "/";
+  const review = reviews.find((issue) => issue.path.replace(/\/+$/, "") === path);
 
   if (path === "/about") return <AboutPage />;
   if (path === "/privacy") return <PrivacyPage />;
-  if (path === "/review/year-1-nr-1") return <ReviewArticlePage />;
+  if (review) return <ReviewArticlePage review={review} />;
   if (path === "/review") return <ReviewArchivePage />;
   return <HomePage />;
 }

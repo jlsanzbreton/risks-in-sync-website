@@ -33,3 +33,16 @@ The combined comparison includes readable desktop and mobile views of the full i
 - None required for this change.
 
 final result: passed
+
+## Dynamic Publication Pack verification — 2026-09-14
+
+- Source visual truth: the user-provided homepage captures at `/var/folders/4_/zl1flq913yn47gfspz7bqfmm0000gp/T/TemporaryItems/NSIRD_screencaptureui_63ZfMS/Captura de pantalla 2026-09-13 a las 23.27.16.png` and the earlier approved desktop/mobile mockups listed above.
+- Implementation evidence: the generated fixture homepage at `http://127.0.0.1:4173/` and the Studio Review Desk preview at `http://127.0.0.1:4174/`, captured in the Codex in-app browser during this review. The persistent implementation captures and combined comparison listed above remain representative because the generated issue deliberately reuses the same approved artwork and layout.
+- Website desktop viewport: 1180 px wide. Document width matched the viewport; the generated `homepage` asset, label and caption rendered without clipping. Caption content measured one rendered line within its 733 px column.
+- Website mobile viewport: 390 × 844 CSS px. Document width matched the viewport and the editorial caption remained within two lines.
+- Studio mobile viewport: 390 × 844 CSS px. Document width matched the viewport after the table containment fix. Each table retained an internal 1050 px scroll surface inside a 316 px viewport without widening the page.
+- Functional state: a Publication Pack image was changed to role `homepage`, given a compact label and explanatory comment, and shown immediately in Studio's sanitized local preview. The generated Website used those same fields for the latest issue.
+- Fallback state: when the latest issue has no `homepage` image, the existing wildebeest/crocodile illustration and its current caption remain unchanged.
+- Console verification: no Website or Studio application errors were observed during the final browser pass.
+
+final result: passed

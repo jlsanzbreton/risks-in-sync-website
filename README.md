@@ -37,7 +37,7 @@ Routes:
 - `/about/` — method, Gray Zones and AI experiment
 - `/privacy/` — privacy notice for private reader feedback
 
-Year 1 · Nr. 1 is complete in `src/content/year-1-nr-1.md`: full article, cascade diagram, required analysis, evidence status, six real source URLs and AI-assisted/human-edited disclosure. No source placeholders remain.
+Year 1 · Nr. 1 is complete in `src/content/reviews/year-1-nr-1/review.md`: full article, cascade diagram, required analysis, evidence status, six real source URLs and AI-assisted/human-edited disclosure. No source placeholders remain.
 
 This is intentionally static: no CMS, custom database, authentication, functions, analytics, AI calls or automatic publishing. Private reader feedback is handled by Netlify Forms and reviewed manually.
 
@@ -46,18 +46,24 @@ The feedback launch decision, legitimate-interest assessment, retention rule and
 ## Architecture
 
 ```text
-HTML entry points + local Markdown/TypeScript content
-→ React page renderer (`src/main.tsx`)
+Publication Pack v1 (`review.md` + declared assets)
+→ shared parser, schema and editorial validator (`scripts/reviews.ts`)
+→ generated typed manifest + issue HTML/Vite entries
+→ generic React page renderer (`src/main.tsx`)
 → Vite static build
 → `dist/`
 → Netlify
 ```
 
-- `src/main.tsx` — layouts, route selection and renderer
+- `src/main.tsx` — layouts and generic manifest-driven renderer
 - `src/styles.css` — visual system and responsive design
-- `src/content/` — issue body and metadata
-- `review/**/index.html` — static route metadata
-- `vite.config.ts` — build entry points
+- `src/content/reviews/<slug>/review.md` — complete editorial source of truth per issue
+- `public/review/<slug>/assets/` — rights-documented images declared by the issue
+- `schemas/publication-pack-v1.schema.json` — canonical versioned frontmatter schema
+- `scripts/reviews.ts` — the one parser/validator used by loading, checks, generation and tests
+- `src/generated/reviews.ts` — ignored, generated typed manifest
+- `review/<slug>/index.html` and `review/.generated-entries.json` — ignored, generated route metadata and Vite inputs
+- `vite.config.ts` — consumes generated entries without per-issue edits
 - `public/risksinsync-icon.png` — master site icon
 - `public/favicon*`, `apple-touch-icon.png`, `icon-*` — browser, Apple and manifest icon variants
 - `public/risksinsync-og.png` — static Open Graph/Twitter preview image
@@ -77,11 +83,13 @@ npm run dev
 Before committing:
 
 ```sh
+npm run check:reviews
+npm test
 npm run build
 git diff --check
 ```
 
-There are currently no test or lint scripts. Preview with `npm run preview`.
+`dev` and `build` validate and generate review content first. Preview the production output with `npm run preview`.
 
 Release only after human editorial approval:
 
@@ -96,34 +104,24 @@ git switch dev
 
 Never force-push. If branches diverge, inspect them instead of forcing a merge. Roll back production with a normal Git revert commit.
 
-## Publish the next issue today
+## Publish a review
 
-For `year-1-nr-2`:
+The hand-off from Risks In Sync Studio is a Publication Pack containing `review.md` and an optional `assets/` directory. See [`docs/publication-pack-v1.md`](docs/publication-pack-v1.md) and start from `src/content/reviews/_template/review.md`.
 
-1. Work on `dev`.
-2. Copy the current `.md` and `.ts` content files to the new slug; preserve required sections and `<!-- CASCADE_DIAGRAM -->`.
-3. Create `review/<slug>/index.html` with correct SEO/Open Graph metadata.
-4. Register its HTML entry in `vite.config.ts`.
-5. Import and route it in `src/main.tsx`; update latest issue and retain older issues in the archive.
-6. Verify every source, claim, evidence label, date and image licence manually.
-7. Build and preview home, archive, issue and about pages on iPhone 13 and desktop.
-8. Push `dev`; merge to `main` only when approved.
+1. Work on `dev` and receive the reviewed Publication Pack.
+2. Copy `review.md` to `src/content/reviews/<slug>/review.md`.
+3. Copy every declared image to `public/review/<slug>/assets/`, preserving the `assets/<filename>` paths used in Markdown.
+4. Run `npm run check:reviews`. Fix editorial data at its source; the validator never repairs or defaults it.
+5. Run `npm test` and `npm run build`.
+6. Run `npm run preview` and review `/`, `/review/` and `/review/<slug>/` on mobile and desktop. Confirm claims, evidence labels, sources, image rights and metadata.
+7. Open a PR from `dev`. Publication occurs only when a human approves and merges it to `main`.
 
-## Semi-automated publishing path
+Do not edit `src/main.tsx`, `vite.config.ts`, generated HTML, the generated manifest, the homepage or the archive for a new issue. Directories under `src/content/reviews/` whose names begin with `_` are templates or supporting material and are not published.
 
-Build this next, without adding a CMS or backend:
-
-1. Make one Markdown file per issue the source of truth, with validated front matter for slug, dates, title, dek, evidence, sources, optional image rights and method version.
-2. Add `npm run new:review -- <slug>` to create a complete issue from a committed template.
-3. Discover content at build time so routes, archive, latest issue and metadata are generated automatically.
-4. Add `npm run check:reviews` to reject missing sections, duplicate slugs, placeholders, malformed sources, missing evidence categories and undocumented image rights.
-5. Add route smoke tests, source-link reporting and iPhone 13/desktop screenshots.
-6. RiS Scout may generate a conforming draft Markdown file, but human review must control evidence status and publication.
-
-Target workflow:
+Publishing flow:
 
 ```text
-Scout/editor draft → one validated Markdown file → local preview
+Studio/editor pack → validated Markdown + assets → local preview
 → human evidence approval → dev → main → Netlify
 ```
 
@@ -153,9 +151,9 @@ Avoid gradients, dashboards, animations, excessive cards or startup-style featur
 
 - Interface/content are English.
 - Routing is deliberately minimal (`window.location.pathname`).
-- Issue one remains text-led. The supplied screenshot appears to derive from Amprion's Dortmund headquarters press image, which Amprion permits for editorial use with attribution. It was not published because it depicts the company headquarters rather than the incident site, and the screenshot itself is not a traceable source asset. The existing `heroImage` field remains ready for one directly sourced image of the Rommerskirchen/Amprion infrastructure, with creator, source and licence recorded in its caption.
+- Issue one remains text-led. The supplied screenshot appears to derive from Amprion's Dortmund headquarters press image, which Amprion permits for editorial use with attribution. It was not published because it depicts the company headquarters rather than the incident site, and the screenshot itself is not a traceable source asset. Its pack therefore declares `images: []` and retains the site-wide social fallback; this decision is documented in the Publication Pack v1 guide.
 - The PNG icon is large and can be optimised later while retaining the source asset.
-- Sources currently appear in both Markdown and TypeScript; the content automation should remove this duplication.
+- Sources and cascade metadata live only in each review's frontmatter. The Markdown body retains the `## SOURCES` insertion point but never duplicates the list.
 - The site has no accounts, audience analytics, advertising trackers or marketing cookies. Optional private feedback is processed as described on `/privacy/` and in `docs/private-feedback-runbook.md`.
 
 ## Launch record

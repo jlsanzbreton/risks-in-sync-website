@@ -5,3 +5,9 @@ dist/
 *.tsbuildinfo
 npm-debug.log*
 output/
+
+# Generated from src/content/reviews/*/review.md
+src/generated/
+review/.generated-entries.json
+review/year-*/
+.gstack/
