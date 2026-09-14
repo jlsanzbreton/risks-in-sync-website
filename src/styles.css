@@ -148,7 +148,7 @@ h1, h2, h3 { letter-spacing: -0.025em; }
 .home-illustration { margin-top: 0; margin-bottom: clamp(4rem, 8vw, 5.5rem); }
 .home-illustration picture,
 .home-illustration img { display: block; width: 100%; }
-.home-illustration img { border: 1px solid var(--line); }
+.home-illustration img { aspect-ratio: 16 / 9; border: 1px solid var(--line); object-fit: cover; }
 .home-illustration figcaption {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
@@ -160,6 +160,12 @@ h1, h2, h3 { letter-spacing: -0.025em; }
   line-height: 1.45;
 }
 .home-illustration figcaption strong { color: var(--ink); font-size: inherit; letter-spacing: 0.1em; text-transform: uppercase; }
+.home-illustration figcaption span {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
 
 .primary-link {
   display: flex;
@@ -207,6 +213,7 @@ h1, h2, h3 { letter-spacing: -0.025em; }
 .page-heading h1 { margin-bottom: 1.5rem; font-size: clamp(3.3rem, 7vw, 6.5rem); line-height: 0.97; font-weight: 580; }
 .page-dek { max-width: 700px; color: var(--muted); font-size: clamp(1.15rem, 2vw, 1.45rem); }
 .archive { padding-bottom: clamp(5rem, 10vw, 10rem); }
+.archive .latest-card + .latest-card { margin-top: clamp(3rem, 7vw, 6rem); }
 .archive .latest-card h3 { font-size: clamp(2.2rem, 5vw, 4.8rem); }
 
 .article-header { width: min(calc(100% - 3rem), 920px); padding: clamp(4rem, 9vw, 7.5rem) 0 clamp(3.5rem, 7vw, 6rem); }
@@ -222,7 +229,8 @@ h1, h2, h3 { letter-spacing: -0.025em; }
 .article-body h3 { margin: 2rem 0 0.65rem; font-size: 1.18rem; line-height: 1.4; }
 .article-body p { margin-bottom: 1.25rem; }
 .article-markdown > div:first-of-type > p:first-child { font-size: clamp(1.18rem, 2.4vw, 1.38rem); line-height: 1.58; }
-.article-markdown > div > h2 { margin-top: clamp(3rem, 7vw, 5.5rem); padding-top: clamp(2.8rem, 6vw, 5rem); border-top: 1px solid var(--line); }
+.article-markdown > div > h2,
+.article-markdown > .review-sources > h2 { margin-top: clamp(3rem, 7vw, 5.5rem); padding-top: clamp(2.8rem, 6vw, 5rem); border-top: 1px solid var(--line); }
 .article-markdown > div > h3 { margin-top: 2.5rem; color: var(--ink); }
 .article-markdown ul, .article-markdown ol { margin: 1.4rem 0 2rem; padding-left: 1.35rem; }
 .article-markdown li { margin-bottom: 0.65rem; padding-left: 0.35rem; }
@@ -247,12 +255,18 @@ h1, h2, h3 { letter-spacing: -0.025em; }
 .cascade-figure figcaption strong { color: var(--amber-bright); }
 .cascade-flow { width: min(100%, 420px); margin: 2rem auto; text-align: center; }
 .flow-node { padding: 0.72rem 1rem; border: 1px solid #77736a; font-size: 0.76rem; font-weight: 730; letter-spacing: 0.09em; text-transform: uppercase; }
-.flow-node.success { border-color: var(--amber-bright); color: var(--amber-bright); }
-.flow-node.stopped { border-color: #5d5a54; color: #77736d; text-decoration: line-through; }
 .flow-arrow { height: 2rem; color: var(--amber-bright); line-height: 2rem; }
-.stop-line { position: relative; height: 2.7rem; }
-.stop-line::before { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: #77736a; }
-.stop-line span { position: relative; display: inline-grid; place-items: center; width: 1.55rem; height: 1.55rem; margin-top: 0.58rem; background: var(--dark); border: 1px solid var(--signal); border-radius: 50%; color: var(--signal); font-size: 1.15rem; line-height: 1; }
+.observed-outcome { display: grid; gap: 0.45rem; border-width: 2px; letter-spacing: 0; text-transform: none; }
+.observed-outcome small,
+.counterfactual-outcome > small { color: #aaa69d; font-size: 0.62rem; font-weight: 760; letter-spacing: 0.1em; text-transform: uppercase; }
+.observed-outcome span { font-size: 0.8rem; line-height: 1.5; }
+.outcome-contained { border-color: var(--amber-bright); color: var(--amber-bright); }
+.outcome-partially_propagated { border-color: #d9823b; color: #efb479; }
+.outcome-fully_propagated { border-color: var(--signal); color: #f28a72; }
+.outcome-ongoing { border-color: #d9b55c; color: #ead08e; }
+.outcome-uncertain { border-color: #77736a; color: #c2beb4; }
+.counterfactual-outcome { display: grid; gap: 0.65rem; margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px dashed #65625b; }
+.counterfactual-outcome .flow-node { border-style: dashed; color: #8f8b82; font-weight: 600; letter-spacing: 0; line-height: 1.45; text-transform: none; }
 .figure-note { margin-bottom: 0 !important; color: #aaa69d; font-size: 0.78rem; line-height: 1.5; }
 .cascade-figure .evidence-tag { border-color: #65625b; color: #bdb8ae; }
 
