@@ -2,6 +2,7 @@ import { StrictMode, useEffect, useState, type FormEvent, type MouseEvent, type 
 import { createRoot } from "react-dom/client";
 import { reviews } from "./generated/reviews";
 import type { CascadeOutcomeStatus, ReviewImage, ReviewIssue, ReviewSource } from "./content/review-types";
+import { reviewNeighbors, searchReviews } from "./review-discovery";
 import "./styles.css";
 
 const CONTACT_POINTER_NAVIGATION_KEY = "risks-in-sync-contact-pointer-navigation";
@@ -19,15 +20,17 @@ function SiteHeader() {
 
   return (
     <header className="site-header">
-      <a className="wordmark" href="/" aria-label="Risks In Sync home">
-        <span>RISKS</span>
-        <i aria-hidden="true" />
-        <span>IN SYNC</span>
-      </a>
-      <nav aria-label="Main navigation">
-        <a href="/review/" aria-current={isReview ? "page" : undefined}>Cascade Review</a>
-        <a href="/about/" aria-current={isAbout ? "page" : undefined}>About</a>
-      </nav>
+      <div className="site-header-inner">
+        <a className="wordmark" href="/" aria-label="Risks In Sync home">
+          <span>RISKS</span>
+          <i aria-hidden="true" />
+          <span>IN SYNC</span>
+        </a>
+        <nav aria-label="Main navigation">
+          <a href="/review/" aria-current={isReview ? "page" : undefined}>Review</a>
+          <a href="/about/" aria-current={isAbout ? "page" : undefined}>About</a>
+        </nav>
+      </div>
     </header>
   );
 }
@@ -96,7 +99,53 @@ function PageShell({ children }: { children: ReactNode }) {
       <SiteHeader />
       <main id="main">{children}</main>
       <SiteFooter />
+      <BackToTop />
     </>
+  );
+}
+
+function BackToTop() {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    let frame = 0;
+    const updateVisibility = () => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => {
+        setIsVisible(window.scrollY > Math.max(480, window.innerHeight * 0.75));
+      });
+    };
+
+    updateVisibility();
+    window.addEventListener("scroll", updateVisibility, { passive: true });
+    window.addEventListener("resize", updateVisibility);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", updateVisibility);
+      window.removeEventListener("resize", updateVisibility);
+    };
+  }, []);
+
+  const scrollToTop = (event: MouseEvent<HTMLButtonElement>) => {
+    event.currentTarget.blur();
+    window.scrollTo({
+      top: 0,
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+    });
+  };
+
+  return (
+    <button
+      className={`back-to-top${isVisible ? " visible" : ""}`}
+      type="button"
+      aria-label="Back to top"
+      aria-hidden={!isVisible}
+      tabIndex={isVisible ? 0 : -1}
+      onClick={scrollToTop}
+    >
+      <Arrow>↑</Arrow>
+    </button>
   );
 }
 
@@ -212,16 +261,72 @@ function HomePage() {
 }
 
 function ReviewArchivePage() {
+  const [query, setQuery] = useState("");
+  const matchingReviews = searchReviews(reviews, query);
+  const hasQuery = query.trim().length > 0;
+  const previousReviews = reviews.slice(1);
+
   return (
     <PageShell>
       <header className="page-heading wrap">
         <p className="kicker">RISKS IN SYNC</p>
         <h1>Cascade Risk Review</h1>
         <p className="page-dek">One recent real-world event. Multiple connected systems. A closer look at how a disturbance propagates, where it amplifies or stops, and whether the cascade is contained or becomes a catastrophe.</p>
+        <div className="review-search">
+          <label htmlFor="review-search">Search reviews</label>
+          <input
+            id="review-search"
+            type="search"
+            value={query}
+            placeholder="Search the archive"
+            autoComplete="off"
+            onChange={(event) => setQuery(event.target.value)}
+          />
+        </div>
       </header>
-      <section className="archive wrap">
-        {reviews.map((review) => <LatestIssue compact review={review} key={review.slug} />)}
-      </section>
+      <div className="archive wrap">
+        {hasQuery ? (
+          <section aria-labelledby="search-results-title">
+            <div className="archive-heading">
+              <p className="kicker">Archive search</p>
+              <h2 id="search-results-title" aria-live="polite">{matchingReviews.length === 1 ? "1 review" : `${matchingReviews.length} reviews`}</h2>
+            </div>
+            {matchingReviews.length > 0 ? (
+              <div className="archive-list">
+                {matchingReviews.map((review) => <LatestIssue compact review={review} key={review.slug} />)}
+              </div>
+            ) : (
+              <div className="archive-empty" role="status">
+                <h3>No reviews found</h3>
+                <p>Try a broader term or clear the search to see the complete archive.</p>
+                <button type="button" onClick={() => setQuery("")}>Clear search</button>
+              </div>
+            )}
+          </section>
+        ) : (
+          <>
+            <section aria-labelledby="latest-review-title">
+              <div className="archive-heading">
+                <p className="kicker">Latest review</p>
+                <h2 id="latest-review-title">The newest case</h2>
+              </div>
+              <LatestIssue compact review={latestReview} />
+            </section>
+
+            {previousReviews.length > 0 ? (
+              <section className="previous-reviews" aria-labelledby="previous-reviews-title">
+                <div className="archive-heading">
+                  <p className="kicker">Previous reviews</p>
+                  <h2 id="previous-reviews-title">Earlier cases</h2>
+                </div>
+                <div className="archive-list">
+                  {previousReviews.map((review) => <LatestIssue compact review={review} key={review.slug} />)}
+                </div>
+              </section>
+            ) : null}
+          </>
+        )}
+      </div>
     </PageShell>
   );
 }
@@ -395,6 +500,7 @@ function ReviewSources({ sources }: { sources: ReviewSource[] }) {
 
 function ReviewArticlePage({ review }: { review: ReviewIssue }) {
   const heroImage = review.images.find((image) => image.role === "hero");
+  const { olderReview, newerReview } = reviewNeighbors(reviews, review.slug);
 
   return (
     <PageShell>
@@ -451,6 +557,26 @@ function ReviewArticlePage({ review }: { review: ReviewIssue }) {
             <p>The purpose is partly experimental: repeated application helps identify where the method works, where it produces weak interpretations and how it may need to change.</p>
             <p>Final case selection, interpretation, editing and publication remain human decisions.</p>
           </aside>
+
+          <nav className="review-navigation" aria-label="Review archive navigation">
+            <div className="review-navigation-side older">
+              {olderReview ? (
+                <a href={olderReview.path}>
+                  <span><Arrow>←</Arrow> Older review</span>
+                  <strong>{olderReview.issue.label}</strong>
+                </a>
+              ) : null}
+            </div>
+            <a className="all-reviews-link" href="/review/">All reviews</a>
+            <div className="review-navigation-side newer">
+              {newerReview ? (
+                <a href={newerReview.path}>
+                  <span>Newer review <Arrow>→</Arrow></span>
+                  <strong>{newerReview.issue.label}</strong>
+                </a>
+              ) : null}
+            </div>
+          </nav>
         </div>
       </article>
     </PageShell>
