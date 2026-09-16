@@ -21,7 +21,7 @@
 
 * { box-sizing: border-box; }
 
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; scroll-padding-top: 80px; }
 
 body {
   margin: 0;
@@ -60,13 +60,21 @@ h1, h2, h3 { letter-spacing: -0.025em; }
 .article-wrap { width: min(calc(100% - 3rem), var(--article)); margin-inline: auto; }
 
 .site-header {
+  position: sticky;
+  z-index: 50;
+  top: 0;
+  width: 100%;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+}
+
+.site-header-inner {
   width: min(calc(100% - 3rem), var(--content));
-  height: 88px;
+  height: 64px;
   margin-inline: auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--line);
 }
 
 .wordmark {
@@ -85,6 +93,9 @@ h1, h2, h3 { letter-spacing: -0.025em; }
 
 .site-header nav a {
   position: relative;
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
   text-decoration: none;
   font-size: 0.9rem;
   font-weight: 650;
@@ -96,7 +107,7 @@ h1, h2, h3 { letter-spacing: -0.025em; }
   position: absolute;
   left: 0;
   right: 0;
-  bottom: -0.55rem;
+  bottom: 0;
   height: 2px;
   background: var(--signal);
 }
@@ -212,9 +223,24 @@ h1, h2, h3 { letter-spacing: -0.025em; }
 .page-heading { padding: clamp(4rem, 8vw, 7rem) 0 clamp(3rem, 6vw, 5rem); }
 .page-heading h1 { margin-bottom: 1.5rem; font-size: clamp(3.3rem, 7vw, 6.5rem); line-height: 0.97; font-weight: 580; }
 .page-dek { max-width: 700px; color: var(--muted); font-size: clamp(1.15rem, 2vw, 1.45rem); }
+.review-search { width: min(100%, 340px); margin-top: 2rem; }
+.review-search label { display: block; margin-bottom: 0.45rem; color: var(--muted); font-size: 0.72rem; font-weight: 720; letter-spacing: 0.08em; text-transform: uppercase; }
+.review-search input { width: 100%; min-height: 44px; padding: 0.65rem 0.8rem; border: 1px solid var(--line); border-radius: 0; background: rgba(255, 255, 255, 0.25); color: var(--ink); font: inherit; font-size: 0.9rem; }
+.review-search input:focus-visible { outline: 3px solid var(--amber); outline-offset: 3px; }
+.review-search input::placeholder { color: var(--muted); }
 .archive { padding-bottom: clamp(5rem, 10vw, 10rem); }
-.archive .latest-card + .latest-card { margin-top: clamp(3rem, 7vw, 6rem); }
+.archive-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 2rem; margin-bottom: 1.5rem; padding-bottom: 0.8rem; border-bottom: 1px solid var(--line); }
+.archive-heading p, .archive-heading h2 { margin: 0; }
+.archive-heading h2 { font-size: clamp(1.15rem, 2vw, 1.5rem); font-weight: 580; }
+.archive-list .latest-card + .latest-card { margin-top: clamp(3rem, 7vw, 6rem); }
 .archive .latest-card h3 { font-size: clamp(2.2rem, 5vw, 4.8rem); }
+.previous-reviews { margin-top: clamp(5rem, 10vw, 9rem); }
+.archive-empty { padding: clamp(2rem, 5vw, 4rem) 0; }
+.archive-empty h3 { margin-bottom: 0.5rem; font-size: 1.5rem; }
+.archive-empty p { color: var(--muted); }
+.archive-empty button { min-height: 44px; padding: 0.65rem 0.9rem; border: 1px solid var(--ink); border-radius: 0; background: transparent; color: var(--ink); font: inherit; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.archive-empty button:hover { background: var(--ink); color: var(--light); }
+.archive-empty button:focus-visible { outline: 3px solid var(--amber); outline-offset: 3px; }
 
 .article-header { width: min(calc(100% - 3rem), 920px); padding: clamp(4rem, 9vw, 7.5rem) 0 clamp(3.5rem, 7vw, 6rem); }
 .article-series, .article-meta { display: flex; justify-content: space-between; gap: 1rem; color: var(--amber); font-size: 0.78rem; font-weight: 730; letter-spacing: 0.09em; text-transform: uppercase; }
@@ -297,6 +323,21 @@ h1, h2, h3 { letter-spacing: -0.025em; }
 .about-review h2 { font-size: clamp(1.75rem, 4vw, 2.7rem); }
 .about-review p:not(.kicker) { color: #cbc7be; font-size: 0.96rem; }
 
+.review-navigation { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; margin-top: clamp(3rem, 7vw, 6rem); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.review-navigation a { text-decoration: none; }
+.review-navigation-side { min-width: 0; }
+.review-navigation-side a { display: flex; min-height: 88px; flex-direction: column; justify-content: center; gap: 0.35rem; padding: 1rem 0; }
+.review-navigation-side span { color: var(--muted); font-size: 0.76rem; font-weight: 700; }
+.review-navigation-side strong { overflow: hidden; font-size: 0.9rem; text-overflow: ellipsis; white-space: nowrap; }
+.review-navigation-side.newer { text-align: right; }
+.review-navigation-side a:hover, .all-reviews-link:hover { color: var(--amber); }
+.all-reviews-link { display: inline-flex; min-height: 44px; align-items: center; align-self: center; margin: 0 1.5rem; padding: 0.5rem 1rem; border-right: 1px solid var(--line); border-left: 1px solid var(--line); font-size: 0.78rem; font-weight: 730; white-space: nowrap; }
+
+.back-to-top { position: fixed; z-index: 40; right: max(1rem, env(safe-area-inset-right)); bottom: max(1rem, env(safe-area-inset-bottom)); width: 48px; height: 48px; border: 1px solid var(--ink); border-radius: 50%; background: var(--paper); color: var(--ink); font: inherit; font-size: 1.3rem; cursor: pointer; opacity: 0; pointer-events: none; transform: translateY(0.75rem); transition: opacity 160ms ease, transform 160ms ease, background-color 160ms ease; }
+.back-to-top.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.back-to-top:hover { background: var(--ink); color: var(--light); }
+.back-to-top:focus-visible { outline: 3px solid var(--amber); outline-offset: 3px; }
+
 .about-content { padding-bottom: clamp(5rem, 10vw, 9rem); }
 .about-content > section { padding: clamp(3rem, 7vw, 5.5rem) 0; border-top: 1px solid var(--line); }
 .about-content h2 { font-size: clamp(2.3rem, 5vw, 4rem); line-height: 1.02; font-weight: 580; }
@@ -358,8 +399,9 @@ h1, h2, h3 { letter-spacing: -0.025em; }
 .author-section h2[data-focus-ring="suppressed"]:focus { outline: none; }
 
 @media (max-width: 760px) {
-  .wrap, .article-wrap, .site-header, .footer-inner { width: min(calc(100% - 2rem), var(--content)); }
-  .site-header { height: 72px; }
+  html { scroll-padding-top: 68px; }
+  .wrap, .article-wrap, .site-header-inner, .footer-inner { width: min(calc(100% - 2rem), var(--content)); }
+  .site-header-inner { height: 60px; }
   .wordmark { font-size: 0.64rem; gap: 0.36rem; }
   .wordmark i { width: 12px; }
   .site-header nav { gap: 1rem; }
@@ -386,6 +428,14 @@ h1, h2, h3 { letter-spacing: -0.025em; }
   .system-list > div, .evidence-list > div, .method-list li { grid-template-columns: 1fr; gap: 0.35rem; }
   .gray-grid, .responsibility-grid { grid-template-columns: 1fr; }
   .feedback-options { grid-template-columns: 1fr; }
+  .archive-heading { display: block; }
+  .archive-heading .kicker { margin-bottom: 0.35rem; }
+  .review-navigation { grid-template-columns: 1fr 1fr; }
+  .all-reviews-link { grid-column: 1 / -1; grid-row: 1; justify-content: center; margin: 0; border-right: 0; border-bottom: 1px solid var(--line); border-left: 0; }
+  .review-navigation-side { grid-row: 2; }
+  .review-navigation-side a { min-height: 76px; }
+  .review-navigation-side.older { padding-right: 0.75rem; }
+  .review-navigation-side.newer { padding-left: 0.75rem; }
   .feedback-comment-heading { display: block; }
   .feedback-comment-heading span { display: block; margin-top: 0.45rem; }
   .gray-grid > div { min-height: auto; }
@@ -403,4 +453,5 @@ h1, h2, h3 { letter-spacing: -0.025em; }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
+  .back-to-top { transition: none; }
 }
