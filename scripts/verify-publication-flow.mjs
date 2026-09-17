@@ -164,6 +164,11 @@ cpSync(WEBSITE_ROOT, repoCopy, {
 });
 symlinkSync(join(WEBSITE_ROOT, "node_modules"), join(repoCopy, "node_modules"), "dir");
 
+// The fixture is now also a real published issue. Remove it only from the disposable
+// baseline copy so this test continues to exercise a genuinely new publication.
+rmSync(join(repoCopy, "src/content/reviews", SLUG), { recursive: true, force: true });
+rmSync(join(repoCopy, "public/review", SLUG), { recursive: true, force: true });
+
 const sourceSnapshots = ["src/main.tsx", "vite.config.ts", "index.html", "review/index.html"]
   .map((path) => [path, sha256(readFileSync(join(repoCopy, path)))]);
 const transformed = transformExtractedPack(repoCopy, SLUG, extracted);
@@ -187,6 +192,8 @@ for (const [expected, label] of [
   [`<link rel="canonical" href="https://risksinsync.com/review/${SLUG}/"`, "canonical"],
   ["property=\"og:type\" content=\"article\"", "Open Graph type"],
   [`property="og:image" content="https://risksinsync.com/review/${SLUG}/assets/hero.webp"`, "Open Graph image"],
+  ['property="og:image:width" content="1672"', "Open Graph image width"],
+  ['property="og:image:height" content="941"', "Open Graph image height"],
   ["name=\"twitter:card\" content=\"summary_large_image\"", "Twitter card"],
   [`name="twitter:image" content="https://risksinsync.com/review/${SLUG}/assets/hero.webp"`, "Twitter image"],
   ["article:published_time\" content=\"2026-09-11", "publication date"],
@@ -197,6 +204,8 @@ const generatedManifest = readFileSync(join(repoCopy, "src/generated/reviews.ts"
 assert.ok(generatedManifest.indexOf(SLUG) < generatedManifest.indexOf("year-1-nr-1"), "Nr. 2 is not the latest generated issue.");
 assertIncludes(generatedManifest, '"role": "homepage"', "homepage image role");
 assertIncludes(generatedManifest, "Gray Zones · Handoff", "homepage image label");
+assertIncludes(generatedManifest, '"intrinsic_width": 1672', "generated image width");
+assertIncludes(generatedManifest, '"intrinsic_height": 941', "generated image height");
 
 async function studioValidity(markdown, includeAsset = true) {
   try {

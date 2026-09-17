@@ -15,9 +15,11 @@ const reviewEntries = JSON.parse(readFileSync(generatedEntriesPath, "utf8")) as 
 export default defineConfig({
   plugins: [react()],
   build: {
+    manifest: true,
     rollupOptions: {
       input: {
         home: fromRoot("index.html"),
+        notFound: fromRoot("404.html"),
         about: fromRoot("about/index.html"),
         privacy: fromRoot("privacy/index.html"),
         review: fromRoot("review/index.html"),
