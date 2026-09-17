@@ -36,6 +36,10 @@ export interface ReviewImage {
   source_url: string | null;
   rights_basis: string | null;
   verification: "cleared" | "pending";
+  /** Added by the website generator from the published asset; not part of the publication pack. */
+  intrinsic_width?: number;
+  /** Added by the website generator from the published asset; not part of the publication pack. */
+  intrinsic_height?: number;
 }
 
 export interface ReviewFrontmatter {

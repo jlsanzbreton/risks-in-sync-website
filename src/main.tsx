@@ -1,20 +1,27 @@
-import { StrictMode, useEffect, useState, type FormEvent, type MouseEvent, type ReactNode } from "react";
-import { createRoot } from "react-dom/client";
+import { StrictMode, createContext, useContext, useEffect, useState, type FormEvent, type MouseEvent, type ReactNode } from "react";
+import { hydrateRoot } from "react-dom/client";
 import { reviews } from "./generated/reviews";
 import type { CascadeOutcomeStatus, ReviewImage, ReviewIssue, ReviewSource } from "./content/review-types";
 import { reviewNeighbors, searchReviews } from "./review-discovery";
+import { analyticsAvailable, initializeAnalytics, readAnalyticsConsent, setAnalyticsConsent, trackEvent, type AnalyticsConsent } from "./analytics";
 import "./styles.css";
 
 const CONTACT_POINTER_NAVIGATION_KEY = "risks-in-sync-contact-pointer-navigation";
 const latestReview = reviews[0];
 const firstReview = reviews.at(-1) ?? latestReview;
+const PathContext = createContext("/");
+const AnalyticsConsentContext = createContext<{
+  consent: AnalyticsConsent;
+  choose: (consent: Exclude<AnalyticsConsent, "unknown">) => void;
+  canConfigure: boolean;
+}>({ consent: "unknown", choose: () => undefined, canConfigure: false });
 
 function Arrow({ children }: { children: ReactNode }) {
   return <span aria-hidden="true">{children}</span>;
 }
 
 function SiteHeader() {
-  const path = window.location.pathname;
+  const path = useContext(PathContext);
   const isReview = path.startsWith("/review");
   const isAbout = path.startsWith("/about");
 
@@ -36,6 +43,8 @@ function SiteHeader() {
 }
 
 function SiteFooter() {
+  const { consent, choose, canConfigure } = useContext(AnalyticsConsentContext);
+
   return (
     <footer className="site-footer">
       <div className="footer-inner">
@@ -46,7 +55,13 @@ function SiteFooter() {
         <div className="footer-meta">
           <p>AI-assisted <span>·</span> Human-edited <span>·</span> Source-backed</p>
           <div className="footer-links">
+            <a href="/feed.xml">Feed</a>
             <a href="/privacy/">Privacy</a>
+            {canConfigure && consent !== "unknown" ? (
+              <button className="footer-consent-link" type="button" onClick={() => choose(consent === "accepted" ? "rejected" : "accepted")}>
+                {consent === "accepted" ? "Disable analytics" : "Enable analytics"}
+              </button>
+            ) : null}
             <ContactLink />
           </div>
         </div>
@@ -92,6 +107,25 @@ function ContactLink() {
   return <a href="/about/#contact" onClick={handleClick}>Contact</a>;
 }
 
+function AnalyticsConsentControl() {
+  const { consent, choose, canConfigure } = useContext(AnalyticsConsentContext);
+
+  if (!canConfigure || consent !== "unknown") return null;
+
+  return (
+    <section className="analytics-consent" aria-labelledby="analytics-consent-title" role="region">
+      <div>
+        <h2 id="analytics-consent-title">Optional audience measurement</h2>
+        <p>With your permission, Risks In Sync uses Google Analytics to understand aggregate readership. Nothing is sent to Google unless you accept. <a href="/privacy/#analytics">Privacy details</a>.</p>
+      </div>
+      <div className="analytics-consent-actions">
+        <button type="button" onClick={() => choose("accepted")}>Accept analytics</button>
+        <button type="button" onClick={() => choose("rejected")}>Reject</button>
+      </div>
+    </section>
+  );
+}
+
 function PageShell({ children }: { children: ReactNode }) {
   return (
     <>
@@ -100,6 +134,7 @@ function PageShell({ children }: { children: ReactNode }) {
       <main id="main">{children}</main>
       <SiteFooter />
       <BackToTop />
+      <AnalyticsConsentControl />
     </>
   );
 }
@@ -189,6 +224,8 @@ function HomePage() {
         {homepageImage ? (
           <img
             src={imageUrl(latestReview, homepageImage)}
+            width={homepageImage.intrinsic_width}
+            height={homepageImage.intrinsic_height}
             loading="lazy"
             decoding="async"
             alt={homepageImage.alt}
@@ -402,6 +439,7 @@ function PrivateFeedback({ slug }: { slug: string }) {
       form.reset();
       setComment("");
       setStatus("accepted");
+      trackEvent("feedback_submit", { review_slug: slug });
     } catch {
       setStatus("error");
     }
@@ -506,6 +544,9 @@ function ReviewArticlePage({ review }: { review: ReviewIssue }) {
     <PageShell>
       <article className="article">
         <header className="article-header article-wrap">
+          <nav className="breadcrumbs" aria-label="Breadcrumb">
+            <a href="/">Home</a><span aria-hidden="true">/</span><a href="/review/">Review</a><span aria-hidden="true">/</span><span aria-current="page">{review.issue.label}</span>
+          </nav>
           <div className="article-series">
             <span>Cascade Risk Review</span>
             <span>{review.issue.label}</span>
@@ -521,7 +562,7 @@ function ReviewArticlePage({ review }: { review: ReviewIssue }) {
 
         {heroImage ? (
           <figure className="article-image article-wrap">
-            <img src={imageUrl(review, heroImage)} alt={heroImage.alt} />
+            <img src={imageUrl(review, heroImage)} width={heroImage.intrinsic_width} height={heroImage.intrinsic_height} alt={heroImage.alt} />
             {heroImage.caption || heroImage.credit || heroImage.rights_basis ? (
               <figcaption>
                 {heroImage.caption ? <span>{heroImage.caption} · </span> : null}
@@ -561,7 +602,7 @@ function ReviewArticlePage({ review }: { review: ReviewIssue }) {
           <nav className="review-navigation" aria-label="Review archive navigation">
             <div className="review-navigation-side older">
               {olderReview ? (
-                <a href={olderReview.path}>
+                <a href={olderReview.path} onClick={() => trackEvent("review_navigation", { direction: "older", destination_slug: olderReview.slug })}>
                   <span><Arrow>←</Arrow> Older review</span>
                   <strong>{olderReview.issue.label}</strong>
                 </a>
@@ -570,7 +611,7 @@ function ReviewArticlePage({ review }: { review: ReviewIssue }) {
             <a className="all-reviews-link" href="/review/">All reviews</a>
             <div className="review-navigation-side newer">
               {newerReview ? (
-                <a href={newerReview.path}>
+                <a href={newerReview.path} onClick={() => trackEvent("review_navigation", { direction: "newer", destination_slug: newerReview.slug })}>
                   <span>Newer review <Arrow>→</Arrow></span>
                   <strong>{newerReview.issue.label}</strong>
                 </a>
@@ -717,29 +758,90 @@ function PrivacyPage() {
           <p>You may ask to access, correct or delete feedback that can reasonably be identified, restrict its use, or object to its processing. Contact the author and provide enough details to locate the response. You may also lodge a complaint with the <a href="https://www.aepd.es/">Spanish Data Protection Agency (AEPD)</a>.</p>
         </section>
 
+        <section id="analytics">
+          <h2>Optional audience analytics</h2>
+          <p>If a valid Google Analytics 4 measurement ID is configured, analytics remains off until you explicitly accept it. Before acceptance—or after rejection—the Google script is not loaded, no analytics cookies are created, and no analytics request or consent ping is sent to Google.</p>
+          <p>After acceptance, Google Analytics receives a clean canonical page location, page title, traffic source or campaign information supplied by your browser, navigation between reviews, and an aggregate feedback-submission event. The selected answer and optional comment are never sent to analytics. Query strings are excluded from the page location.</p>
+          <p>Risks In Sync does not enable advertising, remarketing, Google Signals, advertising personalisation, User-ID, or form-content capture. Google may process technical information such as IP address and device/browser data when analytics is active. Review Google’s terms, retention settings and international-transfer arrangements before enabling the service.</p>
+          <AnalyticsPrivacyControl />
+        </section>
+
         <section>
           <h2>Cookies and changes</h2>
-          <p>Risks In Sync does not use audience analytics, advertising trackers or marketing cookies. This notice will be updated before feedback is used for a materially different purpose or a different provider is introduced.</p>
-          <p className="privacy-updated">Last updated: 10 September 2026.</p>
+          <p>Your analytics choice is stored in local browser storage. If you accept, Google Analytics may set first-party measurement cookies. You can change your choice here or from the footer; withdrawing consent stops future measurement and removes known Google Analytics cookies for this site where the browser permits it.</p>
+          <p>This implementation is a technical consent control, not a certification of legal compliance. The publisher must confirm the legal basis, wording, retention period, Google account settings and any required consent-platform obligations before activation.</p>
+          <p className="privacy-updated">Last updated: 17 September 2026.</p>
         </section>
       </div>
     </PageShell>
   );
 }
 
-function App() {
-  const path = window.location.pathname.replace(/\/+$/, "") || "/";
-  const review = reviews.find((issue) => issue.path.replace(/\/+$/, "") === path);
-
-  if (path === "/about") return <AboutPage />;
-  if (path === "/privacy") return <PrivacyPage />;
-  if (review) return <ReviewArticlePage review={review} />;
-  if (path === "/review") return <ReviewArchivePage />;
-  return <HomePage />;
+function NotFoundPage() {
+  return (
+    <PageShell>
+      <header className="page-heading wrap">
+        <p className="kicker">404</p>
+        <h1>Page not found</h1>
+        <p className="page-dek">The requested page does not exist. <a href="/">Return to Risks In Sync</a>.</p>
+      </header>
+    </PageShell>
+  );
 }
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+function AnalyticsPrivacyControl() {
+  const { consent, choose, canConfigure } = useContext(AnalyticsConsentContext);
+  if (!canConfigure) return <p>Audience analytics is not currently configured.</p>;
+
+  return (
+    <div className="privacy-consent-control">
+      <p>Current choice: <strong>{consent === "accepted" ? "accepted" : consent === "rejected" ? "rejected" : "not chosen"}</strong>.</p>
+      <button type="button" onClick={() => choose("accepted")}>Accept analytics</button>
+      <button type="button" onClick={() => choose("rejected")}>Reject analytics</button>
+    </div>
+  );
+}
+
+function AnalyticsProvider({ children }: { children: ReactNode }) {
+  const [consent, updateConsent] = useState<AnalyticsConsent>("unknown");
+  const [canConfigure, setCanConfigure] = useState(false);
+
+  useEffect(() => {
+    const available = analyticsAvailable();
+    setCanConfigure(available);
+    if (!available) return;
+    const stored = readAnalyticsConsent();
+    updateConsent(stored);
+    if (stored === "accepted") initializeAnalytics();
+  }, []);
+
+  const choose = (choice: Exclude<AnalyticsConsent, "unknown">) => {
+    setAnalyticsConsent(choice);
+    updateConsent(choice);
+    if (choice === "accepted") initializeAnalytics();
+  };
+
+  return <AnalyticsConsentContext.Provider value={{ consent, choose, canConfigure }}>{children}</AnalyticsConsentContext.Provider>;
+}
+
+export function App({ pathname }: { pathname: string }) {
+  const path = pathname.replace(/\/+$/, "") || "/";
+  const review = reviews.find((issue) => issue.path.replace(/\/+$/, "") === path);
+
+  let page: ReactNode;
+  if (path === "/about") page = <AboutPage />;
+  else if (path === "/privacy") page = <PrivacyPage />;
+  else if (review) page = <ReviewArticlePage review={review} />;
+  else if (path === "/review") page = <ReviewArchivePage />;
+  else if (path === "/") page = <HomePage />;
+  else page = <NotFoundPage />;
+
+  return <PathContext.Provider value={path}><AnalyticsProvider>{page}</AnalyticsProvider></PathContext.Provider>;
+}
+
+if (typeof document !== "undefined") {
+  hydrateRoot(
+    document.getElementById("root")!,
+    <StrictMode><App pathname={window.location.pathname} /></StrictMode>,
+  );
+}

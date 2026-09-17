@@ -6,5 +6,5 @@
     "moduleResolution": "Bundler",
     "noEmit": true
   },
-  "include": ["vite.config.ts", "scripts/**/*.ts", "tests/**/*.ts", "src/content/review-types.ts", "src/review-discovery.ts"]
+  "include": ["vite.config.ts", "scripts/**/*.ts", "tests/**/*.ts", "src/analytics.ts", "src/content/review-types.ts", "src/review-discovery.ts", "src/vite-env.d.ts"]
 }

@@ -9,7 +9,7 @@
     "generate:reviews": "node --import tsx scripts/generate-reviews.ts",
     "predev": "npm run check:reviews && npm run generate:reviews",
     "dev": "vite",
-    "build": "npm run check:reviews && npm run generate:reviews && tsc -b && vite build",
+    "build": "npm run check:reviews && npm run generate:reviews && tsc -b && vite build && vite build --ssr src/server.tsx --outDir .prerender --emptyOutDir && node scripts/prerender.mjs && node scripts/verify-build.mjs",
     "preview": "vite preview",
     "test": "node --import tsx --test tests/*.test.ts"
   },
