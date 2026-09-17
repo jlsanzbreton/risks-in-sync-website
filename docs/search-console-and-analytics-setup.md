@@ -2,16 +2,31 @@
 
 The repository produces crawlable HTML, `robots.txt`, `sitemap.xml`, `feed.xml`, route metadata and structured data during every production build. Neither Google Search Console nor Google Analytics requires a secret in Git.
 
-## Current measurement decision — 17 September 2026
+## Current measurement decision — 18 September 2026
 
 Risks In Sync remains an independent editorial experiment. The current decision deliberately separates search visibility from audience tracking:
 
 - **Deploy the discoverability work.** Crawlable HTML, metadata, structured data, `robots.txt`, the sitemap and the Atom feed are part of the publication infrastructure.
-- **Configure Google Search Console after the first deployment.** Search Console is an ownership, indexing and search-performance tool. It does not require a browser analytics script, add cookies to the site or activate GA4. Use it to confirm which pages Google can index, detect canonical or structured-data problems, submit the sitemap, and see aggregate impressions, clicks, queries, CTR and position.
+- **Use Google Search Console as the active measurement baseline.** The `risksinsync.com` Domain property is verified through Porkbun DNS and the sitemap has been submitted successfully. Search Console is an ownership, indexing and search-performance tool. It does not require a browser analytics script, add cookies to the site or activate GA4. Use it to confirm which pages Google can index, detect canonical or structured-data problems, and see aggregate impressions, clicks, queries, CTR and position.
 - **Keep GA4 disabled.** Do not create `VITE_GA_MEASUREMENT_ID` in Netlify. With the variable absent, the Google script, analytics requests, analytics cookies and consent control remain inactive.
 - **Do not treat Search Console as a ranking purchase or guarantee.** Submitting a sitemap or requesting indexing helps discovery and diagnosis but does not guarantee indexing or improve ranking by itself.
 
 This is the lowest-friction default: obtain the information needed to know whether the publication is discoverable, without starting browser-level audience measurement or creating an ongoing analytics operation.
+
+## Production and Search Console handoff — 18 September 2026
+
+The discoverability release is live and the initial setup has been completed:
+
+- the Domain property for `risksinsync.com` is verified through the Porkbun DNS TXT record;
+- the TXT record must remain in DNS to preserve verification;
+- `https://risksinsync.com/sitemap.xml` was accepted by Search Console and reported six discovered pages;
+- the live URL was inspected and indexing was requested for the homepage, Review archive, Year 1 · Nr. 1 and Year 1 · Nr. 2;
+- the Pages report was still processing its first dataset, so no indexed/not-indexed conclusion should yet be drawn;
+- production checks for the public routes, discovery files, real 404 and feedback form passed;
+- the publisher completed the mobile visual check separately; and
+- GA4 remains inactive because no production `VITE_GA_MEASUREMENT_ID` has been configured.
+
+The next action is observation rather than more setup. Revisit Search Console after it has processed the property, record the first indexing states and queries in the table below, and investigate only specific exclusions or canonical errors reported by Google.
 
 ### Review triggers
 
@@ -48,10 +63,10 @@ Reference: [Google Domain properties](https://support.google.com/webmasters/answ
 
 | URL | Publication date | Submitted | Indexing status | First impression | First organic visit | Notes |
 |---|---|---|---|---|---|---|
-| `https://risksinsync.com/` | — | YYYY-MM-DD | Not checked | — | — | |
-| `https://risksinsync.com/review/` | — | YYYY-MM-DD | Not checked | — | — | |
-| `https://risksinsync.com/review/year-1-nr-1/` | 2026-09-08 | YYYY-MM-DD | Not checked | — | — | |
-| `https://risksinsync.com/review/year-1-nr-2/` | 2026-09-15 | YYYY-MM-DD | Not checked | — | — | |
+| `https://risksinsync.com/` | — | 2026-09-18 | Requested; processing | — | — | Live URL inspected. |
+| `https://risksinsync.com/review/` | — | 2026-09-18 | Requested; processing | — | — | Live URL inspected. |
+| `https://risksinsync.com/review/year-1-nr-1/` | 2026-09-08 | 2026-09-18 | Requested; processing | — | — | Live URL inspected. |
+| `https://risksinsync.com/review/year-1-nr-2/` | 2026-09-15 | 2026-09-18 | Requested; processing | — | — | Live URL inspected. |
 | `https://risksinsync.com/review/<new-slug>/` | YYYY-MM-DD | YYYY-MM-DD | Not checked | — | — | Copy this row for each new issue. |
 
 ## GA4 creation and Netlify configuration
