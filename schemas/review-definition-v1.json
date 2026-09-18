@@ -1,0 +1,120 @@
+{
+  "definition_id": "cascade-risk-review",
+  "definition_version": 1,
+  "publication_pack_schema_version": 1,
+  "frontmatter_schema": "publication-pack-v1.schema.json",
+  "body": {
+    "introduction": {
+      "id": "introduction",
+      "required": false,
+      "content": "markdown"
+    },
+    "sequence": [
+      {
+        "kind": "section",
+        "id": "event",
+        "heading": "## The event",
+        "required": true,
+        "content": "substantive_markdown"
+      },
+      {
+        "kind": "section",
+        "id": "cascade",
+        "heading": "## The cascade",
+        "required": true,
+        "content": "substantive_markdown",
+        "slots": [
+          {
+            "id": "cascade_diagram",
+            "marker": "<!-- CASCADE_DIAGRAM -->",
+            "required": true,
+            "position": "before_content"
+          }
+        ]
+      },
+      {
+        "kind": "section",
+        "id": "what_worked",
+        "heading": "## What worked",
+        "required": true,
+        "content": "substantive_markdown"
+      },
+      {
+        "kind": "section",
+        "id": "what_didnt",
+        "heading": "## What didn't — or we don't know",
+        "required": true,
+        "content": "substantive_markdown"
+      },
+      {
+        "kind": "section",
+        "id": "gray_zones",
+        "heading": "## Gray Zones",
+        "required": true,
+        "content": "substantive_markdown"
+      },
+      {
+        "kind": "section",
+        "id": "risks_in_sync",
+        "heading": "## Risks In Sync",
+        "required": true,
+        "content": "substantive_markdown"
+      },
+      {
+        "kind": "section",
+        "id": "case_changes",
+        "heading": "## What this case changes",
+        "required": true,
+        "content": "substantive_markdown"
+      },
+      {
+        "kind": "section_group",
+        "id": "evidence_status",
+        "heading": "## Evidence status",
+        "required": true,
+        "content": "container",
+        "sections": [
+          {
+            "id": "reported",
+            "heading": "### REPORTED",
+            "required": true,
+            "content": "substantive_markdown"
+          },
+          {
+            "id": "observed",
+            "heading": "### OBSERVED",
+            "required": true,
+            "content": "substantive_markdown"
+          },
+          {
+            "id": "inferred",
+            "heading": "### INFERRED",
+            "required": true,
+            "content": "substantive_markdown"
+          },
+          {
+            "id": "unknown",
+            "heading": "### UNKNOWN",
+            "required": true,
+            "content": "substantive_markdown"
+          }
+        ]
+      },
+      {
+        "kind": "slot",
+        "id": "private_feedback",
+        "marker": "<!-- PRIVATE_FEEDBACK -->",
+        "required": true
+      },
+      {
+        "kind": "generated_section",
+        "id": "sources",
+        "heading": "## SOURCES",
+        "required": true,
+        "content": "generated",
+        "source_path": "frontmatter.sources",
+        "source_body": "empty"
+      }
+    ]
+  }
+}

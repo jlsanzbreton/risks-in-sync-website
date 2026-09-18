@@ -139,6 +139,13 @@ const websiteSchema = readFileSync(join(WEBSITE_ROOT, "schemas/publication-pack-
 const studioSchema = readFileSync(join(STUDIO_ROOT, "schemas/vendor/publication-pack-v1.schema.json"));
 assert.deepEqual(studioSchema, websiteSchema, "Publication Pack schemas differ byte-for-byte.");
 const schemaSha256 = sha256(websiteSchema);
+const websiteDefinition = readFileSync(join(WEBSITE_ROOT, "schemas/review-definition-v1.json"));
+const studioDefinition = readFileSync(join(STUDIO_ROOT, "schemas/vendor/review-definition-v1.json"));
+assert.deepEqual(studioDefinition, websiteDefinition, "Review Definition v1 differs byte-for-byte.");
+const definitionSha256 = sha256(websiteDefinition);
+const studioProvenance = readFileSync(join(STUDIO_ROOT, "docs/publication-pack-v1-vendor.md"), "utf8");
+assertIncludes(studioProvenance, "Source path: schemas/review-definition-v1.json", "Review Definition provenance");
+assertIncludes(studioProvenance, `SHA-256: ${definitionSha256}`, "Review Definition provenance");
 
 let record = await studioPublication.importPublicationFiles(fixtureFiles());
 assert.equal(record.validationResult.valid, true, JSON.stringify(record.validationResult.issues, null, 2));
@@ -300,6 +307,7 @@ negativeResults["duplicate slug"] = { studio: ["rejected before branch creation"
 
 const summary = {
   schema: { equalBytes: true, sha256: schemaSha256 },
+  reviewDefinition: { equalBytes: true, sha256: definitionSha256, provenance: true },
   fixture: {
     slug: SLUG,
     imported: true,
