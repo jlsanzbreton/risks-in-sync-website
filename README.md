@@ -52,6 +52,7 @@ The feedback launch decision, legitimate-interest assessment, retention rule and
 Operational documentation:
 
 - [Publication Pack v1 contract](docs/publication-pack-v1.md)
+- [Canonical Review Definition v1](schemas/review-definition-v1.json)
 - [Private feedback runbook](docs/private-feedback-runbook.md)
 - [Search Console and consent-ready GA4 setup](docs/search-console-and-analytics-setup.md)
 - [Cascade Risk Review B+ distribution experiment and handoff](docs/cascade-risk-review-traffic-experiment.md)
@@ -81,7 +82,9 @@ Publication Pack v1 (`review.md` + declared assets)
 - `src/content/reviews/<slug>/review.md` — complete editorial source of truth per issue
 - `public/review/<slug>/assets/` — rights-documented images declared by the issue
 - `schemas/publication-pack-v1.schema.json` — canonical versioned frontmatter schema
+- `schemas/review-definition-v1.json` — canonical versioned body structure for Cascade Risk Review; v1 records current behavior without redesigning it
 - `scripts/reviews.ts` — the one parser/validator used by loading, checks, generation and tests
+- `scripts/preflight-scout-contracts.mjs` — read-only Scout gate that validates canonical contracts and Studio vendored copies before research, reservation or generation
 - `scripts/generate-reviews.ts` — generates review entries, route metadata, sitemap, feed and crawler policy from published content
 - `scripts/prerender.mjs` — renders meaningful route HTML at build time without duplicating the React page implementation
 - `scripts/verify-build.mjs` — verifies static content, metadata, structured data, discovery files and 404 output
@@ -117,6 +120,14 @@ git diff --check
 `dev` and `build` validate and generate review content first. Preview the production output with `npm run preview`.
 
 When the sibling Studio checkout is available, also run `npm run verify:publication-flow` to exercise the cross-repository handoff.
+
+Before a live Scout run, execute the same contract preflight used by the active automation:
+
+```sh
+npm run preflight:scout-contracts -- --website-root /Users/sanzb/dev/risks-in-sync-website --studio-root /Users/sanzb/dev/risks-in-sync-studio
+```
+
+It must return code `0` and `"ok": true`. Any missing, invalid or drifted contract blocks Scout before research, issue reservation, generation or changes to Scout state/exports.
 
 Release only after human editorial approval:
 
@@ -220,3 +231,5 @@ On 14 September 2026 we deployed the generic Publication Pack renderer and valid
 On 15 September 2026 Year 1 · Nr. 2 completed the real Scout-to-Studio-to-Website publication path and was merged through the human-reviewed PR boundary.
 
 On 18 September 2026 the discoverability release put complete route content into the initial HTML, added stable canonical metadata and JSON-LD, generated `robots.txt`, `sitemap.xml` and `feed.xml`, introduced a real 404, and added consent-ready GA4 support that is disabled by default. The `risksinsync.com` Domain property was verified in Google Search Console through Porkbun DNS, the sitemap was accepted with six discovered URLs, and indexing was requested for the homepage, Review archive and both published issues. Google was still processing the initial page-indexing data at handoff.
+
+On 19 September 2026 Website became the canonical home of Review Definition v1, Studio adopted a byte-identical vendored copy with conformance coverage, and the live Scout automation gained a deterministic contract preflight. A controlled smoke test passed without changing Scout state, exports or issue reservations and without starting research or generation. The next roadmap milestone is to observe one real Scout run with the preflight active before removing duplicated structural headings from the live prompt.
