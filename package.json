@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "check:reviews": "node --import tsx scripts/check-reviews.ts",
+    "preflight:scout-contracts": "node scripts/preflight-scout-contracts.mjs",
     "verify:publication-flow": "node --import tsx scripts/verify-publication-flow.mjs",
     "generate:reviews": "node --import tsx scripts/generate-reviews.ts",
     "predev": "npm run check:reviews && npm run generate:reviews",
