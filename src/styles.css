@@ -249,11 +249,14 @@ h1, h2, h3 { letter-spacing: -0.025em; }
 .archive-empty button:hover { background: var(--ink); color: var(--light); }
 .archive-empty button:focus-visible { outline: 3px solid var(--amber); outline-offset: 3px; }
 
-.article-header { width: min(calc(100% - 3rem), 920px); padding: clamp(4rem, 9vw, 7.5rem) 0 clamp(3.5rem, 7vw, 6rem); }
+.article-header { width: min(calc(100% - 3rem), 1080px); padding: clamp(2.5rem, 6vw, 5.5rem) 0 clamp(2.5rem, 5vw, 4.5rem); }
+.article-masthead { margin-top: clamp(2rem, 4vw, 3.5rem); }
+.article-masthead.has-cover { display: grid; grid-template-columns: minmax(150px, 0.27fr) minmax(0, 1fr); align-items: start; gap: clamp(1.5rem, 4vw, 4rem); }
+.article-cover { width: 100%; max-width: 250px; border: 1px solid var(--line); box-shadow: 0 10px 22px rgba(38, 37, 33, 0.12); }
 .article-series, .article-meta { display: flex; justify-content: space-between; gap: 1rem; color: var(--amber); font-size: 0.78rem; font-weight: 730; letter-spacing: 0.09em; text-transform: uppercase; }
-.article-header h1 { max-width: 880px; margin: 2.5rem 0 2rem; font-size: clamp(3rem, 5.15vw, 5.3rem); line-height: 0.94; font-weight: 610; }
+.article-header h1 { max-width: 880px; margin: clamp(1.5rem, 3vw, 2.5rem) 0 1.35rem; font-size: clamp(3rem, 5.15vw, 5.3rem); line-height: 0.94; font-weight: 610; }
 .article-dek { color: #4f4c46; font-size: clamp(1.25rem, 2.3vw, 1.62rem); line-height: 1.5; }
-.article-meta { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.7rem; }
+.article-meta { margin-top: clamp(1.75rem, 3vw, 2.5rem); padding-top: 1rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.7rem; }
 .article-image { margin-bottom: 4rem; }
 .article-image figcaption { margin-top: 0.75rem; color: var(--muted); font-size: 0.8rem; }
 .article-body { padding-bottom: clamp(5rem, 9vw, 9rem); }
@@ -454,6 +457,8 @@ h1, h2, h3 { letter-spacing: -0.025em; }
   .method-grid { margin-top: 2.5rem; }
   .page-heading h1 { font-size: clamp(3.2rem, 15vw, 4.8rem); }
   .article-header h1 { font-size: clamp(2.8rem, 13.2vw, 3.35rem); line-height: 0.96; }
+  .article-masthead.has-cover { grid-template-columns: 94px minmax(0, 1fr); gap: 1.15rem; }
+  .article-cover { max-width: 120px; }
   .article-series, .article-meta { flex-direction: column; gap: 0.35rem; }
   .article-meta { font-size: 0.68rem; }
   .cascade-figure { margin-inline: -0.4rem; }
