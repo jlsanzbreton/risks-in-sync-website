@@ -126,7 +126,7 @@ h1, h2, h3 { letter-spacing: -0.025em; }
 }
 
 .hero-stage { display: grid; grid-template-columns: minmax(0, 2fr) minmax(280px, 0.92fr); gap: clamp(2rem, 5vw, 5rem); align-items: stretch; }
-.hero-rail { display: flex; min-width: 0; flex-direction: column; justify-content: space-between; gap: clamp(1.5rem, 3vw, 3rem); }
+.hero-rail { display: flex; min-width: 0; flex-direction: column; justify-content: flex-start; gap: clamp(1.5rem, 3vw, 3rem); }
 .hero-rail > p { max-width: 400px; margin: 0; color: #4b4943; font-size: clamp(0.98rem, 1.15vw, 1.08rem); line-height: 1.6; }
 
 .hero-review-link {
@@ -134,6 +134,7 @@ h1, h2, h3 { letter-spacing: -0.025em; }
   grid-template-columns: minmax(104px, 0.47fr) minmax(0, 1fr);
   align-items: end;
   gap: 1rem;
+  margin-top: clamp(2rem, 6vw, 6rem);
   padding: 0.8rem 0 0.9rem;
   border-top: 1px solid var(--ink);
   border-bottom: 1px solid var(--ink);
@@ -443,6 +444,7 @@ h1, h2, h3 { letter-spacing: -0.025em; }
   .hero-stage, .two-column, .method-grid { grid-template-columns: 1fr; gap: 1.9rem; }
   .home-hero h1 { font-size: clamp(2.8rem, 13.2vw, 3.35rem); line-height: 0.96; }
   .hero-rail { max-width: 580px; gap: 1.4rem; }
+  .hero-review-link { margin-top: 1.25rem; }
   .hero-review-details > strong { font-size: 1rem; }
   .home-illustration { width: 100%; }
   .home-illustration figcaption { grid-template-columns: 1fr; gap: 0.35rem; }

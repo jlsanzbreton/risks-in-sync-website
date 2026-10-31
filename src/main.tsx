@@ -212,7 +212,6 @@ function HomePage() {
   return (
     <PageShell>
       <section className="home-hero wrap">
-        <div className="eyebrow">RISKS IN SYNC</div>
         <h1>Accidents are inevitable.<br />Catastrophes are not.</h1>
         <div className="hero-stage">
           <figure className="home-illustration">
