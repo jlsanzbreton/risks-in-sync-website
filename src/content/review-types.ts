@@ -27,7 +27,7 @@ export interface ReviewSource {
 export interface ReviewImage {
   id: string;
   path: string;
-  role: "homepage" | "hero" | "inline" | "social";
+  role: "cover" | "homepage" | "hero" | "inline" | "social";
   alt: string;
   decorative: boolean;
   label?: string | null;

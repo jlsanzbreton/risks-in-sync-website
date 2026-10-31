@@ -3,6 +3,7 @@ import { hydrateRoot } from "react-dom/client";
 import { reviews } from "./generated/reviews";
 import type { CascadeOutcomeStatus, ReviewImage, ReviewIssue, ReviewSource } from "./content/review-types";
 import { resolveHomepageIllustration } from "./homepage-illustration";
+import { resolveReviewCover } from "./review-cover";
 import { reviewNeighbors, searchReviews } from "./review-discovery";
 import { analyticsAvailable, initializeAnalytics, readAnalyticsConsent, setAnalyticsConsent, trackEvent, type AnalyticsConsent } from "./analytics";
 import "./styles.css";
@@ -11,14 +12,8 @@ const CONTACT_POINTER_NAVIGATION_KEY = "risks-in-sync-contact-pointer-navigation
 const latestReview = reviews[0];
 const firstReview = reviews.at(-1) ?? latestReview;
 const homepageIllustration = resolveHomepageIllustration(reviews);
-const cascadeRiskReviewCovers: Record<string, string> = {
-  "year-1-nr-8": "/cascade-risk-review-cover-y1-n8.png",
-  "year-1-nr-2": "/cascade-risk-review-cover-y1-n2.png",
-};
-// A cover always links to the issue printed on it. Add each future cover here
-// rather than relabelling a previous issue's artwork in the interface.
-const featuredCoverReview = reviews.find((review) => cascadeRiskReviewCovers[review.slug]) ?? latestReview;
-const featuredCoverImage = cascadeRiskReviewCovers[featuredCoverReview.slug];
+const featuredCoverReview = reviews.find((review) => resolveReviewCover(review)) ?? latestReview;
+const featuredCover = resolveReviewCover(featuredCoverReview);
 const PathContext = createContext("/");
 const AnalyticsConsentContext = createContext<{
   consent: AnalyticsConsent;
@@ -246,15 +241,15 @@ function HomePage() {
           <aside className="hero-rail">
             <p>Risks In Sync explores how disturbances move through connected physical, digital and human systems—and why some failures stop while others become cascades.</p>
             <a className="hero-review-link" href={featuredCoverReview.path} aria-label={`Read ${featuredCoverReview.issue.label}: ${featuredCoverReview.title}`}>
-              {featuredCoverImage ? (
+              {featuredCover ? (
                 <img
                   className="hero-review-cover"
-                  src={featuredCoverImage}
+                  src={featuredCover.src}
                   width="1122"
                   height="1402"
                   loading="eager"
                   decoding="async"
-                  alt={`Cascade Risk Review cover, ${featuredCoverReview.issue.label}`}
+                  alt={featuredCover.alt}
                 />
               ) : null}
               <span className="hero-review-details">
@@ -556,6 +551,7 @@ function ReviewSources({ sources }: { sources: ReviewSource[] }) {
 
 function ReviewArticlePage({ review }: { review: ReviewIssue }) {
   const heroImage = review.images.find((image) => image.role === "hero");
+  const cover = resolveReviewCover(review);
   const { olderReview, newerReview } = reviewNeighbors(reviews, review.slug);
 
   return (
@@ -565,16 +561,29 @@ function ReviewArticlePage({ review }: { review: ReviewIssue }) {
           <nav className="breadcrumbs" aria-label="Breadcrumb">
             <a href="/">Home</a><span aria-hidden="true">/</span><a href="/review/">Review</a><span aria-hidden="true">/</span><span aria-current="page">{review.issue.label}</span>
           </nav>
-          <div className="article-series">
-            <span>Cascade Risk Review</span>
-            <span>{review.issue.label}</span>
-          </div>
-          <h1>{review.title}</h1>
-          <p className="article-dek">{review.dek}</p>
-          <div className="article-meta">
-            <span>By {review.author}</span>
-            <span>Review period: {review.reviewPeriodLabel}</span>
-            <span>Published {review.publicationDateLabel}</span>
+          <div className={`article-masthead${cover ? " has-cover" : ""}`}>
+            {cover ? (
+              <img
+                className="article-cover"
+                src={cover.src}
+                width={cover.image?.intrinsic_width ?? 1122}
+                height={cover.image?.intrinsic_height ?? 1402}
+                alt={cover.alt}
+              />
+            ) : null}
+            <div className="article-masthead-copy">
+              <div className="article-series">
+                <span>Cascade Risk Review</span>
+                <span>{review.issue.label}</span>
+              </div>
+              <h1>{review.title}</h1>
+              <p className="article-dek">{review.dek}</p>
+              <div className="article-meta">
+                <span>By {review.author}</span>
+                <span>Review period: {review.reviewPeriodLabel}</span>
+                <span>Published {review.publicationDateLabel}</span>
+              </div>
+            </div>
           </div>
         </header>
 
