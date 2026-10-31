@@ -2,6 +2,7 @@ import { StrictMode, createContext, useContext, useEffect, useState, type FormEv
 import { hydrateRoot } from "react-dom/client";
 import { reviews } from "./generated/reviews";
 import type { CascadeOutcomeStatus, ReviewImage, ReviewIssue, ReviewSource } from "./content/review-types";
+import { resolveHomepageIllustration } from "./homepage-illustration";
 import { reviewNeighbors, searchReviews } from "./review-discovery";
 import { analyticsAvailable, initializeAnalytics, readAnalyticsConsent, setAnalyticsConsent, trackEvent, type AnalyticsConsent } from "./analytics";
 import "./styles.css";
@@ -9,6 +10,15 @@ import "./styles.css";
 const CONTACT_POINTER_NAVIGATION_KEY = "risks-in-sync-contact-pointer-navigation";
 const latestReview = reviews[0];
 const firstReview = reviews.at(-1) ?? latestReview;
+const homepageIllustration = resolveHomepageIllustration(reviews);
+const cascadeRiskReviewCovers: Record<string, string> = {
+  "year-1-nr-8": "/cascade-risk-review-cover-y1-n8.png",
+  "year-1-nr-2": "/cascade-risk-review-cover-y1-n2.png",
+};
+// A cover always links to the issue printed on it. Add each future cover here
+// rather than relabelling a previous issue's artwork in the interface.
+const featuredCoverReview = reviews.find((review) => cascadeRiskReviewCovers[review.slug]) ?? latestReview;
+const featuredCoverImage = cascadeRiskReviewCovers[featuredCoverReview.slug];
 const PathContext = createContext("/");
 const AnalyticsConsentContext = createContext<{
   consent: AnalyticsConsent;
@@ -199,55 +209,63 @@ function LatestIssue({ compact = false, review = latestReview }: { compact?: boo
 }
 
 function HomePage() {
-  const homepageImage = latestReview.images.find((image) => image.role === "homepage");
-
   return (
     <PageShell>
       <section className="home-hero wrap">
-        <div className="eyebrow">RISKS IN SYNC</div>
-        <div className="hero-grid">
-          <div>
-            <h1>Accidents are inevitable.<br />Catastrophes are not.</h1>
-          </div>
-          <div className="hero-copy">
+        <h1>Accidents are inevitable.<br />Catastrophes are not.</h1>
+        <div className="hero-stage">
+          <figure className="home-illustration">
+            {homepageIllustration ? (
+              <img
+                src={imageUrl(homepageIllustration.review, homepageIllustration.image)}
+                width={homepageIllustration.image.intrinsic_width}
+                height={homepageIllustration.image.intrinsic_height}
+                fetchPriority="high"
+                decoding="async"
+                alt={homepageIllustration.image.alt}
+              />
+            ) : (
+              <picture>
+                <source media="(max-width: 760px)" srcSet="/risks-in-sync-background-noise-960.webp" />
+                <img
+                  src="/risks-in-sync-background-noise-1672.webp"
+                  width="1672"
+                  height="941"
+                  fetchPriority="high"
+                  decoding="async"
+                  alt={'Two wildebeest stand among crocodiles beside a sign reading "Danger crocodiles ahead." One asks, "What\'s that sign?" The other replies, "Just background noise."'}
+                />
+              </picture>
+            )}
+            <figcaption>
+              <strong>{homepageIllustration?.image.label ?? "Gray Zones · Signal"}</strong>
+              <span>{homepageIllustration?.image.caption ?? "When a visible warning becomes familiar enough to be treated as background noise."}</span>
+            </figcaption>
+          </figure>
+
+          <aside className="hero-rail">
             <p>Risks In Sync explores how disturbances move through connected physical, digital and human systems—and why some failures stop while others become cascades.</p>
-            <a className="hero-review-link" href={latestReview.path}>
-              <span className="hero-review-meta"><b>Cascade Risk Review</b><small>{latestReview.issue.label}</small></span>
-              <strong>{latestReview.title}</strong>
-              <span className="hero-review-action">Read the review <Arrow>→</Arrow></span>
+            <a className="hero-review-link" href={featuredCoverReview.path} aria-label={`Read ${featuredCoverReview.issue.label}: ${featuredCoverReview.title}`}>
+              {featuredCoverImage ? (
+                <img
+                  className="hero-review-cover"
+                  src={featuredCoverImage}
+                  width="1122"
+                  height="1402"
+                  loading="eager"
+                  decoding="async"
+                  alt={`Cascade Risk Review cover, ${featuredCoverReview.issue.label}`}
+                />
+              ) : null}
+              <span className="hero-review-details">
+                <span className="hero-review-meta"><b>Cascade Risk Review</b><small>{featuredCoverReview.issue.label}</small></span>
+                <strong>{featuredCoverReview.title}</strong>
+                <span className="hero-review-action">Read the review <Arrow>→</Arrow></span>
+              </span>
             </a>
-          </div>
+          </aside>
         </div>
       </section>
-
-      <figure className="home-illustration wrap">
-        {homepageImage ? (
-          <img
-            src={imageUrl(latestReview, homepageImage)}
-            width={homepageImage.intrinsic_width}
-            height={homepageImage.intrinsic_height}
-            loading="lazy"
-            decoding="async"
-            alt={homepageImage.alt}
-          />
-        ) : (
-          <picture>
-            <source media="(max-width: 760px)" srcSet="/risks-in-sync-background-noise-960.webp" />
-            <img
-              src="/risks-in-sync-background-noise-1672.webp"
-              width="1672"
-              height="941"
-              loading="lazy"
-              decoding="async"
-              alt={'Two wildebeest stand among crocodiles beside a sign reading "Danger crocodiles ahead." One asks, "What\'s that sign?" The other replies, "Just background noise."'}
-            />
-          </picture>
-        )}
-        <figcaption>
-          <strong>{homepageImage?.label ?? "Gray Zones · Signal"}</strong>
-          <span>{homepageImage?.caption ?? "When a visible warning becomes familiar enough to be treated as background noise."}</span>
-        </figcaption>
-      </figure>
 
       <section className="section dark-section">
         <div className="wrap two-column">

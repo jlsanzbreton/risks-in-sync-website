@@ -170,6 +170,9 @@ cpSync(WEBSITE_ROOT, repoCopy, {
   filter: (source) => ![".git", "node_modules", "dist"].includes(source.split("/").at(-1)),
 });
 symlinkSync(join(WEBSITE_ROOT, "node_modules"), join(repoCopy, "node_modules"), "dir");
+// Contract tests resolve Studio as Website's sibling. Keep that relationship in
+// the disposable copy so this integration test exercises the actual handoff.
+symlinkSync(STUDIO_ROOT, join(tempRoot, "risks-in-sync-studio"), "dir");
 
 // The fixture is now also a real published issue. Remove it only from the disposable
 // baseline copy so this test continues to exercise a genuinely new publication.

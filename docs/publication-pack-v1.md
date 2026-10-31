@@ -13,6 +13,8 @@ Paths inside Markdown and frontmatter remain relative to the pack, for example `
 
 The canonical machine-readable frontmatter contract is [`schemas/publication-pack-v1.schema.json`](../schemas/publication-pack-v1.schema.json). Unknown fields are rejected. Semantic and editorial rules that JSON Schema cannot express are enforced by `scripts/reviews.ts`.
 
+The canonical body structure is [`schemas/review-definition-v1.json`](../schemas/review-definition-v1.json). For the current system, `schema_version: 1` selects Publication Pack schema v1 and Cascade Risk Review Definition v1. The definition records the existing introduction, section IDs, headings, order, required state, slots and generated `SOURCES` behavior; it does not replace application-specific parsing, rendering or editorial logic.
+
 ## Delivery formats and assets
 
 The three Studio import choices represent the same Publication Pack contract:
@@ -106,6 +108,14 @@ npm run verify:publication-flow
 ```
 
 This compares the canonical and vendored schemas byte for byte, imports and edits the complete `Year 1 · Nr. 2` fixture through Studio, checks approval invalidation and backup ZIP export, transforms the exported files into a temporary Website copy, runs the Website validation/tests/build, exercises the negative contract matrix, and verifies the simulated GitHub branch/PR transaction. Pass `-- --keep` to retain the temporary Website copy for browser inspection.
+
+The live Scout automation runs a smaller read-only gate before research, reservation or generation:
+
+```sh
+npm run preflight:scout-contracts -- --website-root /Users/sanzb/dev/risks-in-sync-website --studio-root /Users/sanzb/dev/risks-in-sync-studio
+```
+
+This verifies both canonical JSON artifacts, their version relationship, byte identity with Studio's vendored copies and Review Definition checksum provenance. Failure returns a nonzero exit and `SCOUT BLOCKED` before Scout may change sequence state or exports. The controlled live-path smoke test passed on 19 September 2026 with no state, export or reservation changes.
 
 The generator discovers `src/content/reviews/*/review.md`; directories beginning with `_` are ignored for publication. A human reviews the preview and merges the PR. There is no automatic publishing state or repair step.
 

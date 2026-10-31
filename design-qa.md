@@ -34,6 +34,35 @@ The combined comparison includes readable desktop and mobile views of the full i
 
 final result: passed
 
+## Compact editorial hero and review-title system — 2026-10-31
+
+### Evidence
+
+- Source visual truth: the user-provided homepage capture at `/var/folders/4_/zl1flq913yn47gfspz7bqfmm0000gp/T/codex-clipboard-7343fa9b-6274-4473-a369-18472b2e89ed.png`, the supplied Y1·N2 cover at `/Users/sanzb/Library/CloudStorage/Dropbox/VEILIGHEID/Trabajo & Proyectos/Proyectos/Cascade Risk Review/CascadeRiskReview_Cover01.png`, and the project-bound Y1·N8 edition at `public/cascade-risk-review-cover-y1-n8.png`.
+- Implementation capture: rendered in the Codex in-app browser at `http://127.0.0.1:4173/` (homepage) and `http://127.0.0.1:4173/review/year-1-nr-8/` (review); the screenshots are retained in this run's browser evidence.
+- Viewports and state: homepage at 1440 × 900 CSS px, review at 1440 × 900 and 390 × 844 CSS px; initial-load state, then the cover card link.
+- Intentional design difference: this is a user-directed redesign, not a pixel-for-pixel clone of the initial homepage screenshot. The comparison checks the stated outcome: headline, vignette and review access in one desktop viewport.
+
+### Findings
+
+- No actionable P0, P1 or P2 issues found.
+- Typography: the homepage statement and review H1 use the same responsive scale, optical weight and compact line-height. On 390 px, the long review title remains readable without clipping or horizontal overflow.
+- Layout rhythm: at 1440 × 900, the complete hero is visible before the following dark section: brand label, statement, vignette with caption, explanatory copy and the cover link. The vignette occupies the primary two-thirds column; the review rail occupies the remaining column.
+- Colors and assets: the supplied cover is used directly and retains its black, ochre and signal-red language. It is paired only with existing paper, ink, line and amber tokens.
+- Cover integrity: the cover says Year 1 · Nr. 8 and links to that exact issue. A cover-to-issue map prevents a later issue from being silently mislabelled; adding a future cover means adding its corresponding image and map entry.
+- Interaction: the cover card navigated to `/review/year-1-nr-8/` and the article loaded with the intended headline. Production build, review validation and all 66 automated tests passed.
+
+### Comparison history
+
+- First desktop pass: compact hero content fit in the 1440 × 900 viewport; no correction needed.
+- Review-title pass: article H1 was reduced from the older oversized scale and aligned to the homepage scale. Rechecked on desktop and 390 px mobile; no P0/P1/P2 issue remained.
+
+### Follow-up polish
+
+- For each new issue, commission or select a matching cover and add it to the cover map. The current Y1·N8 asset is a non-destructive edit of the supplied Y1·N2 cover; future covers should preserve the collection system while introducing one case-specific variation.
+
+final result: passed
+
 ## Dynamic Publication Pack verification — 2026-09-14
 
 - Source visual truth: the user-provided homepage captures at `/var/folders/4_/zl1flq913yn47gfspz7bqfmm0000gp/T/TemporaryItems/NSIRD_screencaptureui_63ZfMS/Captura de pantalla 2026-09-13 a las 23.27.16.png` and the earlier approved desktop/mobile mockups listed above.
