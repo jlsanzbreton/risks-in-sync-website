@@ -207,7 +207,7 @@ Cada sección debe ser sustantiva. `What worked` incluye lo que mantuvo función
 
 # 10. Imágenes
 
-Por defecto `images: []`. Incluye una imagen solo con archivo real, procedencia, autor, derechos y alt verificables. Sin hotlinking, capturas no trazables ni decoración genérica. Formatos: AVIF, GIF, JPEG, PNG o WebP.
+No uses imágenes salvo las que puedas entregar como archivo real con procedencia, autor, derechos y alt verificables. Cada número seleccionado debe incluir su viñeta `homepage`; los demás roles son opcionales. Sin hotlinking, capturas no trazables ni decoración genérica. Formatos: AVIF, GIF, JPEG, PNG o WebP.
 
 Cada imagen conserva los campos del template: `id`, `path`, `role`, `alt`, `decorative`, `credit`, `source_url`, `rights_basis` y `verification`; añade `label` y `caption` cuando el rol lo requiera.
 
