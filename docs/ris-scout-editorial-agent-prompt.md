@@ -68,6 +68,8 @@ Si el estado no existe, solo inicialízalo cuando Website confirme que el único
 {"schema_version":1,"editorial_year":1,"last_processed_review_period_end":"2026-09-07","cadence_days":7,"publication_delay_days":1,"output_root":"/Users/sanzb/dev/ris-scout/exports","issues":[{"id":"crr-y1-n1","slug":"year-1-nr-1","issue_number":1,"review_period_start":"2026-09-01","review_period_end":"2026-09-07","publication_date":"2026-09-08","status":"published"}],"periods_without_issue":[]}
 ```
 
+Antes de leer, reservar o finalizar una revista, ejecuta `node /Users/sanzb/dev/ris-scout/state/validate-publication-sequence.mjs`. Si devuelve `SCOUT BLOCKED`, no generes ni cambies estado; reconcilia primero contra el PR/paquete publicado. La aplicación Dexie de Scout y su número de demo son independientes: **nunca** son la fuente de verdad editorial.
+
 Calcula en `Europe/Madrid`:
 
 ```text
@@ -88,7 +90,7 @@ output=<OUTPUT_ROOT>/<slug>
 
 Antes de escribir, registra `reserved` mediante escritura atómica; después crea `<output>/assets/`. Reanuda una reserva incompleta: nunca crees otro número. Un número `reserved`, `handed_to_studio` o `published` no se reutiliza.
 
-Solo tras abrir y validar el ZIP cambia atómicamente a `handed_to_studio`. Si no hay caso, no reserves: registra el periodo en `periods_without_issue`, actualiza `last_processed_review_period_end` y devuelve `NO SUITABLE CASE`.
+Solo tras abrir y validar el ZIP cambia atómicamente a `handed_to_studio` **y** actualiza `last_processed_review_period_end` al `review_period_end` de esa misma revista, en una única sustitución del estado. Después vuelve a ejecutar el validador: el cursor debe coincidir con el final del último periodo `handed_to_studio` o `published`. Si no hay caso, no reserves: registra el periodo en `periods_without_issue`, actualiza `last_processed_review_period_end` y devuelve `NO SUITABLE CASE`.
 
 “Year 1” no sigue el año natural. Solo Jose puede iniciar otro año editorial. No guardes credenciales, fuentes, datos personales ni notas de candidatos en el estado.
 
@@ -209,7 +211,7 @@ Por defecto `images: []`. Incluye una imagen solo con archivo real, procedencia,
 
 Cada imagen conserva los campos del template: `id`, `path`, `role`, `alt`, `decorative`, `credit`, `source_url`, `rights_basis` y `verification`; añade `label` y `caption` cuando el rol lo requiera.
 
-Una `homepage` reemplaza la ilustración mientras el número sea el último; prefiere 16:9 (p. ej. 1600×900), `label` ≤48 caracteres y `caption` ≤140 caracteres/2 líneas. `hero` abre el artículo; `inline` debe usarse una vez en Markdown; `social` es para metadatos.
+Una `homepage` sustituye la ilustración editorial vigente hasta que otra revista declare una nueva `homepage`; para cada número seleccionado, entrégala como una viñeta editorial nueva en 16:9 (p. ej. 1600×900). Mantén la familia visual: sabana africana, ñus y cocodrilos, papel cálido, tinta oscura y acentos ocre/rojo; cambia el sesgo cognitivo y la situación en cada número. No reutilices una escena ni un texto de gag anteriores. `label` ≤48 caracteres y `caption` ≤140 caracteres/2 líneas. `hero` abre el artículo; `inline` debe usarse una vez en Markdown; `social` es para metadatos.
 
 Máximo 3 MB por asset, 4 MB el pack sin codificar y 50 assets. Todo asset debe estar declarado, existir bajo `assets/`, usar ruta relativa segura y tener derechos `cleared` antes de entrega.
 
