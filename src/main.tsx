@@ -549,6 +549,37 @@ function ReviewSources({ sources }: { sources: ReviewSource[] }) {
   );
 }
 
+function EditorialModules({ review }: { review: ReviewIssue }) {
+  if (review.schema_version !== 2 || review.editorial_modules.length === 0) return null;
+  return (
+    <section className="editorial-modules" aria-label="Editorial modules">
+      {review.editorial_modules.map((module, index) => {
+        if (module.type === "editorial_note") {
+          return <aside className="editorial-module editorial-note" key={`${module.type}-${index}`}><p className="kicker">Editorial note</p><p>{module.body}</p></aside>;
+        }
+        if (module.type === "operator_checklist") {
+          return (
+            <section className="editorial-module" key={`${module.type}-${index}`}>
+              <p className="kicker">Operator checklist</p>
+              <dl>{module.items.map((item, itemIndex) => <div key={itemIndex}><dt>{item.signal}</dt><dd>{item.response}</dd></div>)}</dl>
+            </section>
+          );
+        }
+        return (
+          <section className="editorial-module" key={`${module.type}-${index}`}>
+            <p className="kicker">Decision log</p>
+            <ol>{module.entries.map((entry, entryIndex) => <li key={itemIndex(entryIndex)}><strong>{entry.decision}</strong><span>{entry.rationale}</span><small>{entry.evidence_status}</small></li>)}</ol>
+          </section>
+        );
+      })}
+    </section>
+  );
+}
+
+function itemIndex(index: number): string {
+  return String(index);
+}
+
 function ReviewArticlePage({ review }: { review: ReviewIssue }) {
   const heroImage = review.images.find((image) => image.role === "hero");
   const cover = resolveReviewCover(review);
@@ -616,6 +647,7 @@ function ReviewArticlePage({ review }: { review: ReviewIssue }) {
           <SafeHtml html={review.html.afterCascade} />
           <PrivateFeedback slug={review.slug} />
           <SafeHtml html={review.html.afterFeedback} />
+          <EditorialModules review={review} />
           <ReviewSources sources={review.sources} />
 
           <aside className="about-review">
