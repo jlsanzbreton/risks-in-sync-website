@@ -160,9 +160,34 @@ test("Review Definition v1 faithfully describes the current Website contract", (
 
 test("all published schema_version 1 Reviews conform to Review Definition v1", () => {
   const { published } = loadReviews(DEFAULT_REPO_ROOT);
-  assert.ok(published.length > 0, "At least one published Review is required for compatibility coverage");
-  for (const review of published) {
-    assert.equal(review.frontmatter.schema_version, definition.publication_pack_schema_version, review.frontmatter.slug);
+  const v1Reviews = published.filter((review) => review.frontmatter.schema_version === definition.publication_pack_schema_version);
+  assert.ok(v1Reviews.length > 0, "At least one published v1 Review is required for compatibility coverage");
+  for (const review of v1Reviews) {
     validateBodyAgainstDefinition(review.body, definition);
   }
+});
+
+test("Review Definition v2 binds the explicit assets and bounded editorial module registry", () => {
+  const definition = JSON.parse(readFileSync(join(DEFAULT_REPO_ROOT, "schemas/review-definition-v2.json"), "utf8")) as {
+    definition_id?: string;
+    definition_version?: number;
+    publication_pack_schema_version?: number;
+    frontmatter_schema?: string;
+    editorial_modules?: { path?: string; ordered?: boolean; content?: string; registry?: Array<{ type?: string }> };
+  };
+
+  assert.equal(definition.definition_id, "cascade-risk-review");
+  assert.equal(definition.definition_version, 2);
+  assert.equal(definition.publication_pack_schema_version, 2);
+  assert.equal(definition.frontmatter_schema, "publication-pack-v2.schema.json");
+  assert.deepEqual(definition.editorial_modules, {
+    path: "frontmatter.editorial_modules",
+    ordered: true,
+    content: "structured_only",
+    registry: [
+      { type: "editorial_note", render: "plain_text_callout", fields: ["body"] },
+      { type: "operator_checklist", render: "signal_response_list", fields: ["items[].signal", "items[].response"] },
+      { type: "decision_log", render: "evidence_decision_list", fields: ["entries[].decision", "entries[].rationale", "entries[].evidence_status"] },
+    ],
+  });
 });

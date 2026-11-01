@@ -52,6 +52,7 @@ The feedback launch decision, legitimate-interest assessment, retention rule and
 Operational documentation:
 
 - [Publication Pack v1 contract](docs/publication-pack-v1.md)
+- [Publication Pack v2 candidate contract](docs/publication-pack-v2.md)
 - [Canonical Review Definition v1](schemas/review-definition-v1.json)
 - [Private feedback runbook](docs/private-feedback-runbook.md)
 - [Search Console and consent-ready GA4 setup](docs/search-console-and-analytics-setup.md)
@@ -67,7 +68,7 @@ Editorial working documents:
 ## Architecture
 
 ```text
-Publication Pack v1 (`review.md` + declared assets)
+Publication Pack v1 (active; `review.md` + declared assets)
 → shared parser, schema and editorial validator (`scripts/reviews.ts`)
 → generated typed manifest + issue entries + discovery artifacts
 → shared React route renderer (`src/main.tsx` + `src/server.tsx`)
@@ -83,6 +84,7 @@ Publication Pack v1 (`review.md` + declared assets)
 - `public/review/<slug>/assets/` — rights-documented images declared by the issue
 - `schemas/publication-pack-v1.schema.json` — canonical versioned frontmatter schema
 - `schemas/review-definition-v1.json` — canonical versioned body structure for Cascade Risk Review; v1 records current behavior without redesigning it
+- `schemas/publication-pack-v2.schema.json` and `schemas/review-definition-v2.json` — prepared additive v2 contract; it is not yet the active Scout output
 - `scripts/reviews.ts` — the one parser/validator used by loading, checks, generation and tests
 - `scripts/preflight-scout-contracts.mjs` — read-only Scout gate that validates canonical contracts and Studio vendored copies before research, reservation or generation
 - `scripts/generate-reviews.ts` — generates review entries, route metadata, sitemap, feed and crawler policy from published content

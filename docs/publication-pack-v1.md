@@ -58,8 +58,8 @@ The fields and shape are those in the canonical schema. Important rules:
 - Image paths start with `assets/`, remain under that directory after decoding, exist in `public/review/<slug>/`, and are unique by filename.
 - Non-decorative images have meaningful alt text. Every Markdown image is declared; every declared inline image is used.
 - Image roles are `homepage`, `hero`, `inline` and `social`. At most one image may use each of `homepage`, `hero` and `social`.
-- A `homepage` image replaces the current editorial illustration while that issue is the latest publication. It requires a short `label` (48 characters maximum) and `caption` (140 characters and at most two explicit lines). The website visually clamps the caption to two lines.
-- `images: []` is valid when an issue has no issue-specific imagery. The website then keeps the current homepage illustration, uses its site-wide social fallback and omits the article hero.
+- A `homepage` image becomes the current editorial illustration until a later review declares another `homepage` image. It requires a short `label` (48 characters maximum) and `caption` (140 characters and at most two explicit lines). The website visually clamps the caption to two lines.
+- `images: []` is valid when an issue has no issue-specific imagery. The website retains the most recent declared homepage illustration, uses its site-wide social fallback and omits the article hero.
 - `cascade.outcome_status` is neutral about success: `contained`, `partially_propagated`, `fully_propagated`, `ongoing`, or `uncertain`.
 - `cascade.observed_outcome` records what actually happened. `cascade.counterfactual_outcome` is nullable and records a plausible alternative or prevented consequence only when it adds supported editorial value.
 

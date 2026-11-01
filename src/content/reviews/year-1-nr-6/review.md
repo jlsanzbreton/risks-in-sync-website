@@ -9,7 +9,7 @@ issue:
   label: Year 1 · Nr. 6
 review_period:
   start: 2026-10-06
-  end: 2026-10-17
+  end: 2026-10-12
 publication_date: 2026-10-13
 title: When the storm turned infrastructure into a relay
 dek: Hurricane Isaias exposed how electricity, water, access and recovery operations can constrain one another—while also showing why a shared cause is not automatically a cascade.

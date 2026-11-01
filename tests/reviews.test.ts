@@ -17,6 +17,7 @@ function makeRepo(): string {
   tempRoots.push(root);
   mkdirSync(join(root, "schemas"), { recursive: true });
   copyFileSync(join(DEFAULT_REPO_ROOT, "schemas/publication-pack-v1.schema.json"), join(root, "schemas/publication-pack-v1.schema.json"));
+  copyFileSync(join(DEFAULT_REPO_ROOT, "schemas/publication-pack-v2.schema.json"), join(root, "schemas/publication-pack-v2.schema.json"));
   return root;
 }
 
@@ -155,6 +156,39 @@ function writePack(root: string, options: PackOptions = {}, assets: string[] = [
     writeFileSync(assetFile, "image fixture");
   }
   return file;
+}
+
+function v2Pack(overrides = ""): string {
+  return pack().replace("schema_version: 1", "schema_version: 2").replace("images: []", `images: []
+assets:
+  cover:
+    id: cover
+    path: assets/cover.webp
+    alt: "A minimal technical cover for the review"
+    decorative: false
+    credit: "Risks In Sync"
+    source_url: "https://example.com/cover"
+    rights_basis: "Original editorial artwork"
+    verification: cleared
+  homepage_vignette:
+    id: vignette
+    path: assets/vignette.webp
+    alt: "Crocodiles wait beside a narrow river crossing"
+    decorative: false
+    label: "Gray Zones · Framing"
+    caption: "A familiar danger is reframed as a harmless routine."
+    credit: "Risks In Sync"
+    source_url: "https://example.com/vignette"
+    rights_basis: "Original editorial artwork"
+    verification: cleared
+editorial_modules:
+  - type: operator_checklist
+    items:
+      - signal: "The queue crosses its operating threshold."
+        response: "Pause intake and assign the handoff owner."
+      - signal: "A dependency loses acknowledgement."
+        response: "Escalate before the buffer is exhausted."
+${overrides}`);
 }
 
 function expectInvalid(run: () => unknown, pattern: RegExp): void {
@@ -354,6 +388,31 @@ test("validates a homepage illustration and its compact editorial caption", asyn
     const file = writePack(root, { imagesYaml: homepageImage().replace('caption: "A visible warning becomes familiar enough to be treated as background noise."', 'caption: "Line one\\nLine two\\nLine three"') }, ["assets/homepage.webp"]);
     expectInvalid(() => parseReviewFile(file, root), /at most two lines/);
   });
+});
+
+test("accepts v2 explicit cover, homepage vignette and ordered structured modules", () => {
+  const root = makeRepo();
+  const slug = "year-1-nr-1";
+  const file = writePack(root, { markdownBody: v2Pack().split("---\n").slice(2).join("---\n") }, ["assets/cover.webp", "assets/vignette.webp"]);
+  writeFileSync(file, v2Pack());
+  const parsed = parseReviewFile(file, root);
+  assert.equal(parsed.review.schema_version, 2);
+  assert.deepEqual(parsed.review.images.map((image) => image.role), ["cover", "homepage"]);
+  assert.equal(parsed.review.editorial_modules[0]?.type, "operator_checklist");
+});
+
+test("rejects v2 missing explicit assets, duplicate modules and free-form module Markdown", async (t) => {
+  const cases: Array<[string, string, RegExp]> = [
+    ["missing cover", v2Pack().replace(/  cover:[\s\S]*?  homepage_vignette:/, "  homepage_vignette:"), /cover/],
+    ["duplicate module", v2Pack(`  - type: editorial_note\n    body: "A bounded note."\n  - type: editorial_note\n    body: "A repeated note."`), /duplicated/],
+    ["free markdown", v2Pack().replace("Pause intake and assign the handoff owner.", "## Uncontrolled heading"), /plain structured text/],
+  ];
+  for (const [_name, markdown, pattern] of cases) {
+    const root = makeRepo();
+    const file = writePack(root, {}, ["assets/cover.webp", "assets/vignette.webp"]);
+    writeFileSync(file, markdown);
+    expectInvalid(() => parseReviewFile(file, root), pattern);
+  }
 });
 
 test("rejects editorial placeholders", () => {

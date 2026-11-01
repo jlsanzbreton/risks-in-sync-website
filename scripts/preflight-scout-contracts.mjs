@@ -26,7 +26,7 @@ function parseJson(bytes, label) {
 
 function validateReviewDefinition(definition, schemaFilename, schemaVersion) {
   assert.equal(definition?.definition_id, "cascade-risk-review", "Review Definition has an unexpected definition_id");
-  assert.equal(definition?.definition_version, 1, "Review Definition has an unexpected definition_version");
+  assert.equal(definition?.definition_version, schemaVersion, "Review Definition has an unexpected definition_version");
   assert.equal(
     definition?.publication_pack_schema_version,
     schemaVersion,
@@ -87,25 +87,41 @@ function validateReviewDefinition(definition, schemaFilename, schemaVersion) {
 
   assert.equal(new Set(ids).size, ids.length, "Review Definition IDs are not unique");
   assert.equal(new Set(tokens).size, tokens.length, "Review Definition headings and markers are not unique");
+
+  if (schemaVersion === 2) {
+    assert.deepEqual(definition.editorial_modules, {
+      path: "frontmatter.editorial_modules",
+      ordered: true,
+      content: "structured_only",
+      registry: [
+        { type: "editorial_note", render: "plain_text_callout", fields: ["body"] },
+        { type: "operator_checklist", render: "signal_response_list", fields: ["items[].signal", "items[].response"] },
+        { type: "decision_log", render: "evidence_decision_list", fields: ["entries[].decision", "entries[].rationale", "entries[].evidence_status"] },
+      ],
+    }, "Review Definition v2 editorial module registry is invalid");
+  }
 }
 
-export function verifyScoutContracts({ websiteRoot = DEFAULT_WEBSITE_ROOT, studioRoot = DEFAULT_STUDIO_ROOT } = {}) {
-  const schemaFilename = "publication-pack-v1.schema.json";
-  const definitionFilename = "review-definition-v1.json";
+export function verifyScoutContracts({ websiteRoot = DEFAULT_WEBSITE_ROOT, studioRoot = DEFAULT_STUDIO_ROOT, contractVersion = 1 } = {}) {
+  assert.ok([1, 2].includes(contractVersion), `Unsupported Publication Pack contract version: ${contractVersion}`);
+  const schemaFilename = `publication-pack-v${contractVersion}.schema.json`;
+  const definitionFilename = `review-definition-v${contractVersion}.json`;
+  const contractLabel = `Publication Pack v${contractVersion}`;
+  const definitionLabel = `Review Definition v${contractVersion}`;
   const websiteSchemaPath = join(websiteRoot, "schemas", schemaFilename);
   const websiteDefinitionPath = join(websiteRoot, "schemas", definitionFilename);
   const studioSchemaPath = join(studioRoot, "schemas/vendor", schemaFilename);
   const studioDefinitionPath = join(studioRoot, "schemas/vendor", definitionFilename);
 
-  const websiteSchemaBytes = readRequired(websiteSchemaPath, "Website Publication Pack v1 schema");
-  const websiteDefinitionBytes = readRequired(websiteDefinitionPath, "Website Review Definition v1");
-  const studioSchemaBytes = readRequired(studioSchemaPath, "Studio vendored Publication Pack v1 schema");
-  const studioDefinitionBytes = readRequired(studioDefinitionPath, "Studio vendored Review Definition v1");
+  const websiteSchemaBytes = readRequired(websiteSchemaPath, `Website ${contractLabel} schema`);
+  const websiteDefinitionBytes = readRequired(websiteDefinitionPath, `Website ${definitionLabel}`);
+  const studioSchemaBytes = readRequired(studioSchemaPath, `Studio vendored ${contractLabel} schema`);
+  const studioDefinitionBytes = readRequired(studioDefinitionPath, `Studio vendored ${definitionLabel}`);
 
-  const schema = parseJson(websiteSchemaBytes, "Website Publication Pack v1 schema");
-  const definition = parseJson(websiteDefinitionBytes, "Website Review Definition v1");
+  const schema = parseJson(websiteSchemaBytes, `Website ${contractLabel} schema`);
+  const definition = parseJson(websiteDefinitionBytes, `Website ${definitionLabel}`);
   const schemaVersion = schema?.properties?.schema_version?.const;
-  assert.equal(schemaVersion, 1, "Website Publication Pack schema does not declare schema_version 1");
+  assert.equal(schemaVersion, contractVersion, `Website Publication Pack schema does not declare schema_version ${contractVersion}`);
   validateReviewDefinition(definition, schemaFilename, schemaVersion);
 
   assert.deepEqual(studioSchemaBytes, websiteSchemaBytes, "Studio Publication Pack schema differs byte-for-byte from Website");
@@ -113,14 +129,16 @@ export function verifyScoutContracts({ websiteRoot = DEFAULT_WEBSITE_ROOT, studi
 
   const schemaSha256 = sha256(websiteSchemaBytes);
   const definitionSha256 = sha256(websiteDefinitionBytes);
-  const provenancePath = join(studioRoot, "docs/publication-pack-v1-vendor.md");
-  const provenance = readRequired(provenancePath, "Studio contract provenance").toString("utf8");
+  const provenancePath = join(studioRoot, `docs/publication-pack-v${contractVersion}-vendor.md`);
+  const provenance = readRequired(provenancePath, `Studio ${contractLabel} provenance`).toString("utf8");
+  assert.ok(provenance.includes(`SHA-256: ${schemaSha256}`), "Studio provenance does not contain the canonical Publication Pack schema checksum");
   assert.ok(provenance.includes(`SHA-256: ${definitionSha256}`), "Studio provenance does not contain the canonical Review Definition checksum");
 
   return {
     ok: true,
     websiteRoot,
     studioRoot,
+    contractVersion,
     schema: { path: websiteSchemaPath, sha256: schemaSha256, studioByteIdentical: true },
     reviewDefinition: {
       path: websiteDefinitionPath,
@@ -143,6 +161,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     const result = verifyScoutContracts({
       websiteRoot: resolve(cliArgument("--website-root") ?? DEFAULT_WEBSITE_ROOT),
       studioRoot: resolve(cliArgument("--studio-root") ?? DEFAULT_STUDIO_ROOT),
+      contractVersion: Number(cliArgument("--contract-version") ?? 1),
     });
     process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
   } catch (error) {
