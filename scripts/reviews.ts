@@ -5,7 +5,7 @@ import Ajv, { type ErrorObject } from "ajv";
 import { marked } from "marked";
 import sanitizeHtml from "sanitize-html";
 import { parseDocument } from "yaml";
-import type { ReviewFrontmatter, ReviewIssue } from "../src/content/review-types";
+import type { ReviewFrontmatter, ReviewImage, ReviewIssue } from "../src/content/review-types";
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 export const DEFAULT_REPO_ROOT = resolve(SCRIPT_DIR, "..");
@@ -62,8 +62,14 @@ export interface LoadReviewsResult {
   drafts: ParsedReview[];
 }
 
-function schemaValidator(repoRoot: string) {
-  const schemaPath = join(repoRoot, "schemas/publication-pack-v1.schema.json");
+function schemaValidator(repoRoot: string, schemaVersion: unknown) {
+  const schemaFilename = schemaVersion === 1
+    ? "publication-pack-v1.schema.json"
+    : schemaVersion === 2
+      ? "publication-pack-v2.schema.json"
+      : null;
+  if (!schemaFilename) return null;
+  const schemaPath = join(repoRoot, "schemas", schemaFilename);
   const schema = JSON.parse(readFileSync(schemaPath, "utf8"));
   return new Ajv({ allErrors: true, strict: true }).compile<ReviewFrontmatter>(schema);
 }
@@ -138,7 +144,7 @@ function substantiveText(markdown: string): string {
     .trim();
 }
 
-function validateStructure(body: string, issues: string[]): { cascade: number; feedback: number; sources: number } {
+function validateStructure(body: string, issues: string[], schemaVersion: 1 | 2): { cascade: number; feedback: number; sources: number } {
   for (const token of REQUIRED_TOKENS) {
     const count = countLine(body, token);
     if (count === 0) issues.push(`section/marker '${token}' is missing`);
@@ -155,6 +161,14 @@ function validateStructure(body: string, issues: string[]): { cascade: number; f
   }
 
   const h2Matches = [...body.matchAll(/^##\s+(.+)\s*$/gm)];
+  if (schemaVersion === 2) {
+    for (const match of h2Matches) {
+      const heading = match[0].trim();
+      if (!SECTION_HEADINGS.includes(heading as typeof SECTION_HEADINGS[number])) {
+        issues.push(`v2 does not allow an undeclared Markdown section '${heading}'; use an editorial_modules registry entry`);
+      }
+    }
+  }
   for (const heading of SECTION_HEADINGS) {
     if (countLine(body, heading) !== 1) continue;
     const match = h2Matches.find((candidate) => candidate[0].trim() === heading);
@@ -193,6 +207,39 @@ function validateStructure(body: string, issues: string[]): { cascade: number; f
     feedback: tokenIndex(body, "<!-- PRIVATE_FEEDBACK -->"),
     sources,
   };
+}
+
+function validateV2EditorialModules(frontmatter: Extract<ReviewFrontmatter, { schema_version: 2 }>, issues: string[]): void {
+  const seen = new Set<string>();
+  const plainText = (value: string, field: string) => {
+    if (/^\s*#{1,6}\s|```|<[^>]+>|!\[[^\]]*\]\([^)]*\)/m.test(value)) {
+      issues.push(`${field} must be plain structured text, not free-form Markdown or HTML`);
+    }
+  };
+
+  frontmatter.editorial_modules.forEach((module, index) => {
+    const field = `editorial_modules[${index}]`;
+    if (seen.has(module.type)) issues.push(`${field}.type '${module.type}' is duplicated; each registered module may appear once`);
+    seen.add(module.type);
+    if (module.type === "editorial_note") plainText(module.body, `${field}.body`);
+    if (module.type === "operator_checklist") module.items.forEach((item, itemIndex) => {
+      plainText(item.signal, `${field}.items[${itemIndex}].signal`);
+      plainText(item.response, `${field}.items[${itemIndex}].response`);
+    });
+    if (module.type === "decision_log") module.entries.forEach((entry, entryIndex) => {
+      plainText(entry.decision, `${field}.entries[${entryIndex}].decision`);
+      plainText(entry.rationale, `${field}.entries[${entryIndex}].rationale`);
+    });
+  });
+}
+
+function publicationImages(frontmatter: ReviewFrontmatter): ReviewImage[] {
+  if (frontmatter.schema_version === 1) return frontmatter.images;
+  return [
+    { ...frontmatter.assets.cover, role: "cover" },
+    { ...frontmatter.assets.homepage_vignette, role: "homepage" },
+    ...frontmatter.images,
+  ];
 }
 
 function validateHttps(value: string, field: string, issues: string[]): void {
@@ -296,8 +343,10 @@ export function parseReviewFile(file: string, repoRoot = DEFAULT_REPO_ROOT): Par
     throw new ReviewValidationError(displayFile, document.errors.map((error) => `frontmatter: ${error.message}`));
   }
   const value = document.toJS();
-  const validate = schemaValidator(repoRoot);
-  if (!validate(value)) issues.push(...(validate.errors ?? []).map(formatAjvError));
+  const schemaVersion = value && typeof value === "object" ? (value as { schema_version?: unknown }).schema_version : undefined;
+  const validate = schemaValidator(repoRoot, schemaVersion);
+  if (!validate) issues.push("schema_version must be exactly 1 or 2");
+  else if (!validate(value)) issues.push(...(validate.errors ?? []).map(formatAjvError));
   if (issues.length) throw new ReviewValidationError(displayFile, issues);
 
   const frontmatter = value as ReviewFrontmatter;
@@ -316,6 +365,7 @@ export function parseReviewFile(file: string, repoRoot = DEFAULT_REPO_ROOT): Par
     }
   };
   inspectEditorialStrings(frontmatter, "frontmatter");
+  if (frontmatter.schema_version === 2) validateV2EditorialModules(frontmatter, issues);
   requireText(frontmatter.id, "id", issues);
   requireText(frontmatter.issue.label, "issue.label", issues);
   requireText(frontmatter.title, "title", issues);
@@ -363,13 +413,16 @@ export function parseReviewFile(file: string, repoRoot = DEFAULT_REPO_ROOT): Par
     if (frontmatter.status === "ready_for_pr" && source.verification !== "verified") issues.push(`${field}.verification must be 'verified' for ready_for_pr`);
   });
 
+  const declaredImages = publicationImages(frontmatter);
   const imageIds = new Set<string>();
   const imagePaths = new Set<string>();
   const imageFilenames = new Set<string>();
   const canonicalImagePaths = new Map<string, string>();
   const roles = new Map<string, number>();
-  frontmatter.images.forEach((image, index) => {
-    const field = `images[${index}]`;
+  declaredImages.forEach((image, index) => {
+    const field = frontmatter.schema_version === 2 && index < 2
+      ? index === 0 ? "assets.cover" : "assets.homepage_vignette"
+      : `images[${frontmatter.schema_version === 2 ? index - 2 : index}]`;
     requireText(image.id, `${field}.id`, issues);
     if (imageIds.has(image.id)) issues.push(`${field}.id '${image.id}' is duplicated`);
     imageIds.add(image.id);
@@ -418,19 +471,20 @@ export function parseReviewFile(file: string, repoRoot = DEFAULT_REPO_ROOT): Par
     referenceCounts.set(safePath, (referenceCounts.get(safePath) ?? 0) + 1);
     if (!imagePaths.has(safePath)) issues.push(`Markdown image '${safePath}' is not declared in frontmatter.images`);
   });
-  for (const image of frontmatter.images) {
+  for (const image of declaredImages) {
     const canonicalPath = canonicalImagePaths.get(image.path) ?? image.path;
     if (image.role === "inline" && !referenceCounts.has(canonicalPath)) issues.push(`inline image '${image.path}' is declared but not used in Markdown`);
     if ((referenceCounts.get(canonicalPath) ?? 0) > 1) issues.push(`Markdown image '${image.path}' is used more than once`);
   }
 
-  const markers = validateStructure(body, issues);
+  const markers = validateStructure(body, issues, frontmatter.schema_version);
   if (issues.length) throw new ReviewValidationError(displayFile, issues);
 
   const cascadeEnd = markers.cascade + "<!-- CASCADE_DIAGRAM -->".length;
   const feedbackEnd = markers.feedback + "<!-- PRIVATE_FEEDBACK -->".length;
   const review: ReviewIssue = {
     ...frontmatter,
+    images: declaredImages,
     path: `/review/${frontmatter.slug}/`,
     reviewPeriodLabel: formatReviewPeriod(frontmatter.review_period.start, frontmatter.review_period.end),
     publicationDateLabel: formatDate(frontmatter.publication_date),

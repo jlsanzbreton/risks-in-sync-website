@@ -43,7 +43,7 @@ test("uses a declared cover before the legacy fallback", () => {
   }]));
 
   assert.deepEqual(cover, {
-    src: "/year-1-nr-8/assets/cover.png",
+    src: "/review/year-1-nr-8/assets/cover.png",
     alt: "A declared issue cover.",
     image: {
       id: "cover",

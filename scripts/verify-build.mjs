@@ -44,7 +44,8 @@ for (const route of routes) {
 for (const review of reviews) {
   const html = readFileSync(fileFor(review.path), "utf8");
   const bodySample = review.html.beforeCascade.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
-  assert.ok(bodySample.length > 30 && html.includes(bodySample), `${review.slug} does not contain its article body`);
+  const renderedText = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  assert.ok(bodySample.length > 30 && renderedText.includes(bodySample), `${review.slug} does not contain its article body`);
   assert.match(html, new RegExp(`private-feedback-${review.slug}`), `${review.slug} lost its Netlify form`);
   assert.match(html, /"@type":"Article"/, `${review.slug} has no Article JSON-LD`);
 }

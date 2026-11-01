@@ -19,7 +19,7 @@ export function resolveReviewCover(review: ReviewIssue): ReviewCover | null {
   const image = review.images.find((candidate) => candidate.role === "cover");
   if (image) {
     return {
-      src: `/${review.slug}/${image.path}`,
+      src: `/review/${review.slug}/${image.path}`,
       alt: image.alt,
       image,
     };

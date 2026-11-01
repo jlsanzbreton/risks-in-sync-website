@@ -42,8 +42,7 @@ export interface ReviewImage {
   intrinsic_height?: number;
 }
 
-export interface ReviewFrontmatter {
-  schema_version: 1;
+export interface ReviewFrontmatterBase {
   id: string;
   slug: string;
   status: "draft" | "ready_for_pr";
@@ -71,7 +70,28 @@ export interface ReviewFrontmatter {
   images: ReviewImage[];
 }
 
-export interface ReviewIssue extends ReviewFrontmatter {
+export interface PublicationPackV1 extends ReviewFrontmatterBase {
+  schema_version: 1;
+}
+
+export type EditorialModule =
+  | { type: "editorial_note"; body: string }
+  | { type: "operator_checklist"; items: Array<{ signal: string; response: string }> }
+  | { type: "decision_log"; entries: Array<{ decision: string; rationale: string; evidence_status: EvidenceStatus }> };
+
+export interface PublicationPackV2 extends ReviewFrontmatterBase {
+  schema_version: 2;
+  /** V2 keeps article cover and homepage vignette outside the general image list. */
+  assets: {
+    cover: Omit<ReviewImage, "role">;
+    homepage_vignette: Omit<ReviewImage, "role"> & { label: string; caption: string };
+  };
+  editorial_modules: EditorialModule[];
+}
+
+export type ReviewFrontmatter = PublicationPackV1 | PublicationPackV2;
+
+export type ReviewIssue = ReviewFrontmatter & {
   path: string;
   reviewPeriodLabel: string;
   publicationDateLabel: string;
@@ -80,4 +100,4 @@ export interface ReviewIssue extends ReviewFrontmatter {
     afterCascade: string;
     afterFeedback: string;
   };
-}
+};

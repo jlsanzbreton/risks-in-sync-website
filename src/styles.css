@@ -163,6 +163,18 @@ h1, h2, h3 { letter-spacing: -0.025em; }
 .hero-review-link:hover .hero-review-details > strong { color: var(--amber); }
 .hero-review-link:hover .hero-review-cover { box-shadow: 0 12px 24px rgba(38, 37, 33, 0.18); transform: translateY(-3px); }
 
+.editorial-modules { display: grid; gap: 1rem; margin: 2.5rem 0; }
+.editorial-module { border: 1px solid var(--line); padding: 1.15rem 1.25rem; background: rgba(255, 255, 255, 0.32); }
+.editorial-module > :last-child { margin-bottom: 0; }
+.editorial-module dl { margin: 0; }
+.editorial-module dl > div { display: grid; grid-template-columns: minmax(9rem, 0.45fr) 1fr; gap: 0.75rem; padding: 0.8rem 0; border-top: 1px solid var(--line); }
+.editorial-module dt { font-weight: 700; }
+.editorial-module dd { margin: 0; }
+.editorial-module ol { margin: 0; padding-left: 1.25rem; }
+.editorial-module li { display: grid; gap: 0.25rem; margin: 0 0 0.9rem; }
+.editorial-module li:last-child { margin-bottom: 0; }
+.editorial-module li small { color: var(--muted); font-weight: 700; letter-spacing: 0.08em; }
+
 .home-illustration { min-width: 0; margin: 0; }
 .home-illustration picture,
 .home-illustration img { display: block; width: 100%; }
@@ -449,6 +461,7 @@ h1, h2, h3 { letter-spacing: -0.025em; }
   .hero-rail { max-width: 580px; gap: 1.4rem; }
   .hero-review-link { margin-top: 1.25rem; }
   .hero-review-details > strong { font-size: 1rem; }
+  .editorial-module dl > div { grid-template-columns: 1fr; gap: 0.3rem; }
   .home-illustration { width: 100%; }
   .home-illustration figcaption { grid-template-columns: 1fr; gap: 0.35rem; }
   .primary-link { align-items: flex-start; flex-wrap: wrap; }
