@@ -401,6 +401,41 @@ test("accepts v2 explicit cover, homepage vignette and ordered structured module
   assert.equal(parsed.review.editorial_modules[0]?.type, "operator_checklist");
 });
 
+test("accepts a v2 special issue anchored to its ordinary number", () => {
+  const root = makeRepo();
+  const slug = "year-1-nr-8-special";
+  const specialPack = v2Pack()
+    .replace('id: "crr-y1-n1"', 'id: "crr-y1-n8-special"')
+    .replace("slug: year-1-nr-1", `slug: ${slug}`)
+    .replace("  number: 1", "  number: 8")
+    .replace('label: "Year 1 · Nr. 1"', 'label: "Year 1 · Nr. 8 · Special"');
+  const file = writePack(
+    root,
+    {
+      slug,
+      id: "crr-y1-n8-special",
+      number: 8,
+      markdownBody: specialPack.split("---\n").slice(2).join("---\n"),
+    },
+    ["assets/cover.webp", "assets/vignette.webp"],
+  );
+
+  writeFileSync(file, specialPack);
+
+  const parsed = parseReviewFile(file, root);
+  assert.equal(parsed.review.schema_version, 2);
+  assert.equal(parsed.review.slug, slug);
+  assert.equal(parsed.review.issue.number, 8);
+  assert.equal(parsed.review.issue.label, "Year 1 · Nr. 8 · Special");
+});
+
+test("keeps special slugs limited to Publication Pack v2", () => {
+  const root = makeRepo();
+  const file = writePack(root, { slug: "year-1-nr-1-special" });
+
+  assert.throws(() => parseReviewFile(file, root), /must match pattern/);
+});
+
 test("rejects v2 missing explicit assets, duplicate modules and free-form module Markdown", async (t) => {
   const cases: Array<[string, string, RegExp]> = [
     ["missing cover", v2Pack().replace(/  cover:[\s\S]*?  homepage_vignette:/, "  homepage_vignette:"), /cover/],
