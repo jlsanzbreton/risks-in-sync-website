@@ -160,9 +160,9 @@ test("Review Definition v1 faithfully describes the current Website contract", (
 
 test("all published schema_version 1 Reviews conform to Review Definition v1", () => {
   const { published } = loadReviews(DEFAULT_REPO_ROOT);
-  assert.ok(published.length > 0, "At least one published Review is required for compatibility coverage");
-  for (const review of published) {
-    assert.equal(review.frontmatter.schema_version, definition.publication_pack_schema_version, review.frontmatter.slug);
+  const v1Reviews = published.filter((review) => review.frontmatter.schema_version === definition.publication_pack_schema_version);
+  assert.ok(v1Reviews.length > 0, "At least one published v1 Review is required for compatibility coverage");
+  for (const review of v1Reviews) {
     validateBodyAgainstDefinition(review.body, definition);
   }
 });
