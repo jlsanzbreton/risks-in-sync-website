@@ -382,7 +382,7 @@ export function parseReviewFile(file: string, repoRoot = DEFAULT_REPO_ROOT): Par
   frontmatter.cascade.steps.forEach((step, index) => requireText(step, `cascade.steps[${index}]`, issues));
   const directorySlug = basename(dirname(file));
   if (directorySlug !== frontmatter.slug) issues.push(`slug '${frontmatter.slug}' does not match directory '${directorySlug}'`);
-  const slugMatch = frontmatter.slug.match(/^year-([1-9]\d*)-nr-([1-9]\d*)$/);
+  const slugMatch = frontmatter.slug.match(/^year-([1-9]\d*)-nr-([1-9]\d*)(?:-special)?$/);
   if (slugMatch && (Number(slugMatch[1]) !== frontmatter.issue.year || Number(slugMatch[2]) !== frontmatter.issue.number)) {
     issues.push(`issue.year/issue.number do not agree with slug '${frontmatter.slug}'`);
   }
