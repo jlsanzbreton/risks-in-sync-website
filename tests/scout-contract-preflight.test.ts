@@ -20,6 +20,11 @@ function copyContracts() {
     join(studioRoot, "docs/publication-pack-v1-vendor.md"),
     { recursive: true },
   );
+  cpSync(
+    join(STUDIO_ROOT, "docs/publication-pack-v2-vendor.md"),
+    join(studioRoot, "docs/publication-pack-v2-vendor.md"),
+    { recursive: true },
+  );
   return { websiteRoot, studioRoot };
 }
 
@@ -33,10 +38,23 @@ test("Scout contract preflight accepts the current Website and Studio contracts"
   assert.equal(result.reviewDefinition.provenanceMatches, true);
 });
 
+test("Scout contract preflight accepts the current Website and Studio v2 contracts", () => {
+  const result = verifyScoutContracts({ websiteRoot: DEFAULT_REPO_ROOT, studioRoot: STUDIO_ROOT, contractVersion: 2 });
+  assert.equal(result.ok, true);
+  assert.equal(result.contractVersion, 2);
+  assert.equal(result.reviewDefinition.definitionVersion, 2);
+  assert.equal(result.schema.studioByteIdentical, true);
+  assert.equal(result.reviewDefinition.provenanceMatches, true);
+});
+
 test("Scout contract preflight fails on invalid canonical Review Definition JSON", () => {
   const roots = copyContracts();
   writeFileSync(join(roots.websiteRoot, "schemas/review-definition-v1.json"), "{ invalid json\n");
   assert.throws(() => verifyScoutContracts(roots), /Review Definition v1 is not valid JSON/);
+});
+
+test("Scout contract preflight rejects an unsupported contract version", () => {
+  assert.throws(() => verifyScoutContracts({ contractVersion: 3 }), /Unsupported Publication Pack contract version: 3/);
 });
 
 test("Scout contract preflight fails when the canonical Publication Pack schema is missing", () => {

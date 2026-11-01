@@ -4,7 +4,7 @@ Publication Pack v2 is an additive, versioned successor to [v1](publication-pack
 
 ## Status and activation boundary
 
-The Website and Risks In Sync Studio prepare and validate v2, but the live RiS Scout automation remains pinned to v1 until a separately approved activation change updates its read-only contract preflight, generation prompt and observed-run checks. Do not change a v1 pack in place or emit v2 from Scout before that decision.
+The Website and Risks In Sync Studio prepare and validate v2. RiS Scout must run the explicit v2 preflight before it can generate a v2 pack; changing the active Scout prompt is a separate activation decision. Do not change a v1 pack in place.
 
 The canonical machine-readable artifacts are:
 
@@ -28,4 +28,8 @@ The Website normalizes v2's two explicit assets into its internal image represen
 
 ## Verification
 
-Run the ordinary Website checks plus Studio's v2 import validation. Cross-repository preflight remains a v1-only operational safeguard until Scout activation is intentionally changed.
+Run the ordinary Website checks plus Studio's v2 import validation and the explicit v2 preflight:
+
+```text
+npm run preflight:scout-contracts:v2 -- --website-root /Users/sanzb/dev/risks-in-sync-website --studio-root /Users/sanzb/dev/risks-in-sync-studio
+```
