@@ -461,7 +461,8 @@ function PrivateFeedback({ slug }: { slug: string }) {
   return (
     <section className="private-feedback" aria-labelledby={titleId}>
       <p className="kicker">Private feedback</p>
-      <h2 id={titleId}>Did the Risks In Sync lens show you something that a conventional account of this incident would probably have missed?</h2>
+      <h2 id={titleId}>Did this review change how you see the incident?</h2>
+      <p className="feedback-intro">One private answer helps improve the next review.</p>
 
       {status === "accepted" ? (
         <p className="feedback-status success" role="status">Thank you. Your private feedback has been recorded.</p>
@@ -483,16 +484,14 @@ function PrivateFeedback({ slug }: { slug: string }) {
           <fieldset disabled={status === "submitting"}>
             <legend>Your answer</legend>
             <div className="feedback-options">
-              <label><input type="radio" name="answer" value="yes_clearly" required /> <span>Yes, clearly</span></label>
-              <label><input type="radio" name="answer" value="not_really" /> <span>Not really</span></label>
-              <label><input type="radio" name="answer" value="hard_to_tell" /> <span>Hard to tell</span></label>
+              <label><input type="radio" name="answer" value="yes" required /> <span>Yes</span></label>
+              <label><input type="radio" name="answer" value="not_yet" /> <span>Not yet</span></label>
+              <label><input type="radio" name="answer" value="not_sure" /> <span>Not sure</span></label>
             </div>
 
-            <div className="feedback-comment">
-              <div className="feedback-comment-heading">
-                <label htmlFor={commentId}>Why?</label>
-                <span id={optionalId}>Optional</span>
-              </div>
+            <details className="feedback-comment">
+              <summary>Add context <span id={optionalId}>Optional</span></summary>
+              <label htmlFor={commentId}>What made you say that?</label>
               <textarea
                 id={commentId}
                 name="comment"
@@ -503,7 +502,7 @@ function PrivateFeedback({ slug }: { slug: string }) {
                 onChange={(event) => setComment(event.target.value)}
               />
               <span id={countId} className="character-count">{comment.length} / 400</span>
-            </div>
+            </details>
 
             <button type="submit">{status === "submitting" ? "Sending…" : "Send private feedback"}</button>
           </fieldset>
@@ -523,6 +522,17 @@ function PrivateFeedback({ slug }: { slug: string }) {
 
 function SafeHtml({ html }: { html: string }) {
   return <div dangerouslySetInnerHTML={{ __html: html }} />;
+}
+
+function ArticleEditorial({ editorial }: { editorial: string | null }) {
+  if (!editorial) return null;
+
+  return (
+    <aside className="article-editorial" aria-label="Editorial">
+      <p className="kicker">Editorial</p>
+      <p>{editorial}</p>
+    </aside>
+  );
 }
 
 function imageUrl(review: ReviewIssue, image: ReviewImage): string {
@@ -609,6 +619,7 @@ function ReviewArticlePage({ review }: { review: ReviewIssue }) {
               </div>
               <h1>{review.title}</h1>
               <p className="article-dek">{review.dek}</p>
+              <ArticleEditorial editorial={review.editorial} />
               <div className="article-meta">
                 <span>By {review.author}</span>
                 <span>Review period: {review.reviewPeriodLabel}</span>
@@ -645,18 +656,20 @@ function ReviewArticlePage({ review }: { review: ReviewIssue }) {
           <SafeHtml html={review.html.beforeCascade} />
           <CascadeDiagram review={review} />
           <SafeHtml html={review.html.afterCascade} />
-          <PrivateFeedback slug={review.slug} />
           <SafeHtml html={review.html.afterFeedback} />
           <EditorialModules review={review} />
           <ReviewSources sources={review.sources} />
 
-          <aside className="about-review">
-            <p className="kicker">About this review</p>
-            {review.editorial ? <h2>{review.editorial}</h2> : null}
-            <p>Cascade Risk Review uses AI to help search, compare sources, structure evidence and repeatedly apply the Risks In Sync and Gray Zones frameworks.</p>
-            <p>The purpose is partly experimental: repeated application helps identify where the method works, where it produces weak interpretations and how it may need to change.</p>
-            <p>Final case selection, interpretation, editing and publication remain human decisions.</p>
-          </aside>
+          <div className="article-closing">
+            <aside className="about-review">
+              <p className="kicker">About this review</p>
+              <p>Cascade Risk Review uses AI to help search, compare sources, structure evidence and repeatedly apply the Risks In Sync and Gray Zones frameworks.</p>
+              <p>The purpose is partly experimental: repeated application helps identify where the method works, where it produces weak interpretations and how it may need to change.</p>
+              <p>Final case selection, interpretation, editing and publication remain human decisions.</p>
+            </aside>
+
+            <PrivateFeedback slug={review.slug} />
+          </div>
 
           <nav className="review-navigation" aria-label="Review archive navigation">
             <div className="review-navigation-side older">
