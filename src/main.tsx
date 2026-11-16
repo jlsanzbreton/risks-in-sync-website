@@ -524,6 +524,65 @@ function SafeHtml({ html }: { html: string }) {
   return <div dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
+type ArticleHtmlSection = {
+  heading: string;
+  html: string;
+};
+
+type ArticleHtmlParts = {
+  intro: string;
+  sections: ArticleHtmlSection[];
+};
+
+function splitArticleHtml(html: string): ArticleHtmlParts {
+  const headingPattern = /<h2>(.*?)<\/h2>/g;
+  const matches = [...html.matchAll(headingPattern)];
+  if (matches.length === 0) return { intro: html, sections: [] };
+
+  const intro = html.slice(0, matches[0].index);
+  const sections = matches.map((match, index) => ({
+    heading: match[1].replace(/<[^>]+>/g, "").trim(),
+    html: html.slice(match.index, matches[index + 1]?.index),
+  }));
+
+  return { intro, sections };
+}
+
+function ArticleIntro({ html, className = "" }: { html: string; className?: string }) {
+  if (!html.trim()) return null;
+  return <div className={`article-intro ${className}`.trim()}><SafeHtml html={html} /></div>;
+}
+
+function ArticleSectionGrid({
+  sections,
+  appendixForHeading,
+  appendix,
+}: {
+  sections: ArticleHtmlSection[];
+  appendixForHeading?: string;
+  appendix?: ReactNode;
+}) {
+  if (sections.length === 0) return null;
+  return (
+    <div className="article-section-grid">
+      {sections.map((section) => (
+        <section className="article-section" key={`${section.heading}-${section.html.length}`}>
+          <SafeHtml html={section.html} />
+          {section.heading === appendixForHeading ? appendix : null}
+        </section>
+      ))}
+    </div>
+  );
+}
+
+function EditorialPrinciple() {
+  return (
+    <aside className="article-principle" aria-label="Editorial principle">
+      <strong>Evidence ≠ interpretation</strong>
+    </aside>
+  );
+}
+
 function ArticleEditorial({ editorial }: { editorial: string | null }) {
   if (!editorial) return null;
 
@@ -559,11 +618,14 @@ function ReviewSources({ sources }: { sources: ReviewSource[] }) {
   );
 }
 
-function EditorialModules({ review }: { review: ReviewIssue }) {
-  if (review.schema_version !== 2 || review.editorial_modules.length === 0) return null;
+function EditorialModules({ review, placement = "all" }: { review: ReviewIssue; placement?: "all" | "decision-log" | "other" }) {
+  const modules = review.schema_version === 2
+    ? review.editorial_modules.filter((module) => placement === "all" || (placement === "decision-log" ? module.type === "decision_log" : module.type !== "decision_log"))
+    : [];
+  if (modules.length === 0) return null;
   return (
     <section className="editorial-modules" aria-label="Editorial modules">
-      {review.editorial_modules.map((module, index) => {
+      {modules.map((module, index) => {
         if (module.type === "editorial_note") {
           return <aside className="editorial-module editorial-note" key={`${module.type}-${index}`}><p className="kicker">Editorial note</p><p>{module.body}</p></aside>;
         }
@@ -594,6 +656,10 @@ function ReviewArticlePage({ review }: { review: ReviewIssue }) {
   const heroImage = review.images.find((image) => image.role === "hero");
   const cover = resolveReviewCover(review);
   const { olderReview, newerReview } = reviewNeighbors(reviews, review.slug);
+  const beforeCascade = splitArticleHtml(review.html.beforeCascade);
+  const afterCascade = splitArticleHtml(review.html.afterCascade);
+  const afterFeedback = splitArticleHtml(review.html.afterFeedback);
+  const beforeCascadeSections = beforeCascade.sections.filter((section) => section.heading !== "The cascade");
 
   return (
     <PageShell>
@@ -604,13 +670,16 @@ function ReviewArticlePage({ review }: { review: ReviewIssue }) {
           </nav>
           <div className={`article-masthead${cover ? " has-cover" : ""}`}>
             {cover ? (
-              <img
-                className="article-cover"
-                src={cover.src}
-                width={cover.image?.intrinsic_width ?? 1122}
-                height={cover.image?.intrinsic_height ?? 1402}
-                alt={cover.alt}
-              />
+              <div className="article-cover-rail">
+                <img
+                  className="article-cover"
+                  src={cover.src}
+                  width={cover.image?.intrinsic_width ?? 1122}
+                  height={cover.image?.intrinsic_height ?? 1402}
+                  alt={cover.alt}
+                />
+                <EditorialPrinciple />
+              </div>
             ) : null}
             <div className="article-masthead-copy">
               <div className="article-series">
@@ -625,6 +694,7 @@ function ReviewArticlePage({ review }: { review: ReviewIssue }) {
                 <span>Review period: {review.reviewPeriodLabel}</span>
                 <span>Published {review.publicationDateLabel}</span>
               </div>
+              {!cover ? <EditorialPrinciple /> : null}
             </div>
           </div>
         </header>
@@ -647,17 +717,29 @@ function ReviewArticlePage({ review }: { review: ReviewIssue }) {
         ) : null}
 
         <div className="article-body article-wrap article-markdown">
-          <aside className="principle-callout">
-            <span>Editorial principle</span>
-            <strong>Evidence ≠ interpretation</strong>
-            <p>Reported facts, public outcomes, analytical inferences and unknowns are separated throughout this review.</p>
-          </aside>
+          <ArticleIntro html={beforeCascade.intro} className="article-opening" />
 
-          <SafeHtml html={review.html.beforeCascade} />
-          <CascadeDiagram review={review} />
-          <SafeHtml html={review.html.afterCascade} />
-          <SafeHtml html={review.html.afterFeedback} />
-          <EditorialModules review={review} />
+          <div className="article-event-cascade">
+            {beforeCascadeSections.map((section) => (
+              <section className="article-event-section" key={`${section.heading}-${section.html.length}`}>
+                <SafeHtml html={section.html} />
+              </section>
+            ))}
+            <section className="article-cascade-section">
+              <h2>The cascade</h2>
+              <CascadeDiagram review={review} />
+            </section>
+          </div>
+
+          <ArticleIntro html={afterCascade.intro} className="article-cascade-analysis" />
+          <ArticleSectionGrid
+            sections={afterCascade.sections}
+            appendixForHeading="What this case changes"
+            appendix={<EditorialModules review={review} placement="decision-log" />}
+          />
+          <ArticleIntro html={afterFeedback.intro} />
+          <ArticleSectionGrid sections={afterFeedback.sections} />
+          <EditorialModules review={review} placement="other" />
           <ReviewSources sources={review.sources} />
 
           <div className="article-closing">
