@@ -22,13 +22,13 @@ cascade:
   title: Supplier compromise, physical consequence avoided
   subtitle: A remote refrigeration incident crossed into a clinical supply system but was intercepted by monitoring and staff action.
   steps:
-    - A cybersecurity incident affected remote monitoring software used by a refrigeration supplier.
-    - Temperature and defrost thresholds at three EFS plasma-storage sites were raised to extreme settings.
-    - EFS monitoring detected the abnormal condition and alerted operators.
-    - Technical teams secured or transferred plasma and samples before they were compromised.
-    - Collection and distribution continued while EFS, ANSSI and the health ministry investigated.
+    - Supplier system compromised
+    - Unsafe thresholds raised
+    - Alarms detect change
+    - Teams secure plasma
+    - Service continues
   outcome_status: contained
-  observed_outcome: EFS reported no loss of blood products or samples, no identified health impact, and uninterrupted collection and distribution.
+  observed_outcome: No products lost
   counterfactual_outcome: null
   evidence_status: REPORTED
   note: The public record supports the attempted parameter changes and their containment, not the full intrusion path, the precise control architecture, or attribution of this incident.

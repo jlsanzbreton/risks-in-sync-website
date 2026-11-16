@@ -524,6 +524,58 @@ function SafeHtml({ html }: { html: string }) {
   return <div dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
+type ArticleHtmlSection = {
+  heading: string;
+  html: string;
+};
+
+type ArticleHtmlParts = {
+  intro: string;
+  sections: ArticleHtmlSection[];
+};
+
+function splitArticleHtml(html: string): ArticleHtmlParts {
+  const headingPattern = /<h2>(.*?)<\/h2>/g;
+  const matches = [...html.matchAll(headingPattern)];
+  if (matches.length === 0) return { intro: html, sections: [] };
+
+  const intro = html.slice(0, matches[0].index);
+  const sections = matches.map((match, index) => ({
+    heading: match[1].replace(/<[^>]+>/g, "").trim(),
+    html: html.slice(match.index, matches[index + 1]?.index),
+  }));
+
+  return { intro, sections };
+}
+
+function ArticleIntro({ html }: { html: string }) {
+  if (!html.trim()) return null;
+  return <div className="article-intro"><SafeHtml html={html} /></div>;
+}
+
+function ArticleSectionGrid({ sections }: { sections: ArticleHtmlSection[] }) {
+  if (sections.length === 0) return null;
+  return (
+    <div className="article-section-grid">
+      {sections.map((section) => (
+        <section className="article-section" key={`${section.heading}-${section.html.length}`}>
+          <SafeHtml html={section.html} />
+        </section>
+      ))}
+    </div>
+  );
+}
+
+function EditorialPrinciple() {
+  return (
+    <aside className="article-principle" aria-label="Editorial principle">
+      <span>Editorial principle</span>
+      <strong>Evidence ≠ interpretation</strong>
+      <small>Reported · inferred · unknown</small>
+    </aside>
+  );
+}
+
 function ArticleEditorial({ editorial }: { editorial: string | null }) {
   if (!editorial) return null;
 
@@ -594,6 +646,10 @@ function ReviewArticlePage({ review }: { review: ReviewIssue }) {
   const heroImage = review.images.find((image) => image.role === "hero");
   const cover = resolveReviewCover(review);
   const { olderReview, newerReview } = reviewNeighbors(reviews, review.slug);
+  const beforeCascade = splitArticleHtml(review.html.beforeCascade);
+  const afterCascade = splitArticleHtml(review.html.afterCascade);
+  const afterFeedback = splitArticleHtml(review.html.afterFeedback);
+  const beforeCascadeSections = beforeCascade.sections.filter((section) => section.heading !== "The cascade");
 
   return (
     <PageShell>
@@ -604,13 +660,16 @@ function ReviewArticlePage({ review }: { review: ReviewIssue }) {
           </nav>
           <div className={`article-masthead${cover ? " has-cover" : ""}`}>
             {cover ? (
-              <img
-                className="article-cover"
-                src={cover.src}
-                width={cover.image?.intrinsic_width ?? 1122}
-                height={cover.image?.intrinsic_height ?? 1402}
-                alt={cover.alt}
-              />
+              <div className="article-cover-rail">
+                <img
+                  className="article-cover"
+                  src={cover.src}
+                  width={cover.image?.intrinsic_width ?? 1122}
+                  height={cover.image?.intrinsic_height ?? 1402}
+                  alt={cover.alt}
+                />
+                <EditorialPrinciple />
+              </div>
             ) : null}
             <div className="article-masthead-copy">
               <div className="article-series">
@@ -625,6 +684,7 @@ function ReviewArticlePage({ review }: { review: ReviewIssue }) {
                 <span>Review period: {review.reviewPeriodLabel}</span>
                 <span>Published {review.publicationDateLabel}</span>
               </div>
+              {!cover ? <EditorialPrinciple /> : null}
             </div>
           </div>
         </header>
@@ -647,16 +707,18 @@ function ReviewArticlePage({ review }: { review: ReviewIssue }) {
         ) : null}
 
         <div className="article-body article-wrap article-markdown">
-          <aside className="principle-callout">
-            <span>Editorial principle</span>
-            <strong>Evidence ≠ interpretation</strong>
-            <p>Reported facts, public outcomes, analytical inferences and unknowns are separated throughout this review.</p>
-          </aside>
+          <ArticleIntro html={beforeCascade.intro} />
+          <ArticleSectionGrid sections={beforeCascadeSections} />
 
-          <SafeHtml html={review.html.beforeCascade} />
-          <CascadeDiagram review={review} />
-          <SafeHtml html={review.html.afterCascade} />
-          <SafeHtml html={review.html.afterFeedback} />
+          <section className="article-cascade-section">
+            <h2>The cascade</h2>
+            <CascadeDiagram review={review} />
+            <ArticleIntro html={afterCascade.intro} />
+          </section>
+
+          <ArticleSectionGrid sections={afterCascade.sections} />
+          <ArticleIntro html={afterFeedback.intro} />
+          <ArticleSectionGrid sections={afterFeedback.sections} />
           <EditorialModules review={review} />
           <ReviewSources sources={review.sources} />
 
