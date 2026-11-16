@@ -548,18 +548,27 @@ function splitArticleHtml(html: string): ArticleHtmlParts {
   return { intro, sections };
 }
 
-function ArticleIntro({ html }: { html: string }) {
+function ArticleIntro({ html, className = "" }: { html: string; className?: string }) {
   if (!html.trim()) return null;
-  return <div className="article-intro"><SafeHtml html={html} /></div>;
+  return <div className={`article-intro ${className}`.trim()}><SafeHtml html={html} /></div>;
 }
 
-function ArticleSectionGrid({ sections }: { sections: ArticleHtmlSection[] }) {
+function ArticleSectionGrid({
+  sections,
+  appendixForHeading,
+  appendix,
+}: {
+  sections: ArticleHtmlSection[];
+  appendixForHeading?: string;
+  appendix?: ReactNode;
+}) {
   if (sections.length === 0) return null;
   return (
     <div className="article-section-grid">
       {sections.map((section) => (
         <section className="article-section" key={`${section.heading}-${section.html.length}`}>
           <SafeHtml html={section.html} />
+          {section.heading === appendixForHeading ? appendix : null}
         </section>
       ))}
     </div>
@@ -569,9 +578,7 @@ function ArticleSectionGrid({ sections }: { sections: ArticleHtmlSection[] }) {
 function EditorialPrinciple() {
   return (
     <aside className="article-principle" aria-label="Editorial principle">
-      <span>Editorial principle</span>
       <strong>Evidence ≠ interpretation</strong>
-      <small>Reported · inferred · unknown</small>
     </aside>
   );
 }
@@ -611,11 +618,14 @@ function ReviewSources({ sources }: { sources: ReviewSource[] }) {
   );
 }
 
-function EditorialModules({ review }: { review: ReviewIssue }) {
-  if (review.schema_version !== 2 || review.editorial_modules.length === 0) return null;
+function EditorialModules({ review, placement = "all" }: { review: ReviewIssue; placement?: "all" | "decision-log" | "other" }) {
+  const modules = review.schema_version === 2
+    ? review.editorial_modules.filter((module) => placement === "all" || (placement === "decision-log" ? module.type === "decision_log" : module.type !== "decision_log"))
+    : [];
+  if (modules.length === 0) return null;
   return (
     <section className="editorial-modules" aria-label="Editorial modules">
-      {review.editorial_modules.map((module, index) => {
+      {modules.map((module, index) => {
         if (module.type === "editorial_note") {
           return <aside className="editorial-module editorial-note" key={`${module.type}-${index}`}><p className="kicker">Editorial note</p><p>{module.body}</p></aside>;
         }
@@ -707,19 +717,29 @@ function ReviewArticlePage({ review }: { review: ReviewIssue }) {
         ) : null}
 
         <div className="article-body article-wrap article-markdown">
-          <ArticleIntro html={beforeCascade.intro} />
-          <ArticleSectionGrid sections={beforeCascadeSections} />
+          <ArticleIntro html={beforeCascade.intro} className="article-opening" />
 
-          <section className="article-cascade-section">
-            <h2>The cascade</h2>
-            <CascadeDiagram review={review} />
-            <ArticleIntro html={afterCascade.intro} />
-          </section>
+          <div className="article-event-cascade">
+            {beforeCascadeSections.map((section) => (
+              <section className="article-event-section" key={`${section.heading}-${section.html.length}`}>
+                <SafeHtml html={section.html} />
+              </section>
+            ))}
+            <section className="article-cascade-section">
+              <h2>The cascade</h2>
+              <CascadeDiagram review={review} />
+            </section>
+          </div>
 
-          <ArticleSectionGrid sections={afterCascade.sections} />
+          <ArticleIntro html={afterCascade.intro} className="article-cascade-analysis" />
+          <ArticleSectionGrid
+            sections={afterCascade.sections}
+            appendixForHeading="What this case changes"
+            appendix={<EditorialModules review={review} placement="decision-log" />}
+          />
           <ArticleIntro html={afterFeedback.intro} />
           <ArticleSectionGrid sections={afterFeedback.sections} />
-          <EditorialModules review={review} />
+          <EditorialModules review={review} placement="other" />
           <ReviewSources sources={review.sources} />
 
           <div className="article-closing">
